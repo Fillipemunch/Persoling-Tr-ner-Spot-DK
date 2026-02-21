@@ -77,8 +77,8 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
           </p>
           
           {/* Search Box */}
-          <div className="max-w-3xl mx-auto bg-slate-900/80 p-2 rounded-2xl shadow-2xl border border-neon-cyan/30 flex flex-col md:flex-row gap-2 backdrop-blur-xl">
-            <div className="flex-1 relative">
+          <div className="max-w-4xl mx-auto bg-slate-900/80 p-2 rounded-2xl shadow-2xl border border-neon-cyan/30 flex flex-col md:flex-row gap-2 backdrop-blur-xl">
+            <div className="flex-[2] relative">
               <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -90,6 +90,27 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
                 onChange={(e) => setFilters(prev => ({...prev, search: e.target.value}))}
               />
             </div>
+            
+            <div className="flex-1 flex gap-2">
+              <select 
+                className="flex-1 bg-black/40 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-4 focus:outline-none focus:border-neon-cyan appearance-none cursor-pointer"
+                value={filters.specialty}
+                onChange={(e) => setFilters(prev => ({...prev, specialty: e.target.value}))}
+              >
+                <option value="">{t.filters.allSpecialties}</option>
+                {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              
+              <select 
+                className="flex-1 bg-black/40 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-4 focus:outline-none focus:border-neon-cyan appearance-none cursor-pointer"
+                value={filters.location}
+                onChange={(e) => setFilters(prev => ({...prev, location: e.target.value}))}
+              >
+                <option value="">{t.filters.allLocations}</option>
+                {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+
             <button className="bg-neon-cyan hover:bg-white text-black font-bold px-8 py-4 rounded-xl transition-all active:scale-95 shadow-neon-cyan">
               {t.hero.exploreBtn}
             </button>
@@ -99,32 +120,7 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1 w-full">
-        {/* Filter Controls */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">{t.filters.goal}</span>
-              <select 
-                className="bg-slate-900 border border-slate-800 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-neon-cyan"
-                value={filters.specialty}
-                onChange={(e) => setFilters(prev => ({...prev, specialty: e.target.value}))}
-              >
-                <option value="">{t.filters.allSpecialties}</option>
-                {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">{t.filters.city}</span>
-              <select 
-                className="bg-slate-900 border border-slate-800 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-neon-cyan"
-                value={filters.location}
-                onChange={(e) => setFilters(prev => ({...prev, location: e.target.value}))}
-              >
-                <option value="">{t.filters.allLocations}</option>
-                {LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
-              </select>
-            </div>
-          </div>
+        <div className="flex justify-between items-center mb-8">
           <p className="text-slate-500 text-sm font-medium">
             {t.filters.showing} <span className="text-neon-cyan">{filteredTrainers.length}</span> {t.filters.trainers}
           </p>
