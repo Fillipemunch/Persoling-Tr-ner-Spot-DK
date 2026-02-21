@@ -11,7 +11,7 @@ export interface Trainer {
   certified: boolean;
 }
 
-export type UserRole = 'client' | 'trainer';
+export type UserRole = 'client' | 'trainer' | 'admin';
 export type TrainerStatus = 'none' | 'pending' | 'accepted';
 
 export interface User {

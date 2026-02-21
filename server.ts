@@ -14,7 +14,17 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
 // Mock Database
-const users: User[] = [];
+const users: User[] = [
+  {
+    id: 'admin-001',
+    email: 'fillipeferreiramunch@gmail.com',
+    name: 'Fillipe Ferreira (Admin)',
+    role: 'admin',
+    password: 'admin', // Default password for your first login
+    imageUrl: 'https://picsum.photos/seed/admin/200',
+    trainerStatus: 'accepted'
+  }
+];
 const clientProfiles: ClientProfile[] = [];
 const trainingPlans: TrainingPlan[] = [];
 const dietPlans: DietPlan[] = [];
