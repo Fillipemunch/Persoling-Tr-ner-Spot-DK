@@ -208,7 +208,14 @@ const AppContent: React.FC = () => {
                 <Link to="/" className="hover:text-neon-cyan transition-colors">{t.nav.findTrainers}</Link>
                 {user ? (
                   <>
-                    <Link to="/dashboard" className="hover:text-neon-cyan transition-colors">{t.nav.dashboard}</Link>
+                    <Link 
+                      to={user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? "/admin" : "/dashboard"} 
+                      className="hover:text-neon-cyan transition-colors"
+                    >
+                      {user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
+                        ? t.nav.admin 
+                        : (user.role === 'trainer' ? t.dashboard.trainerDashboard : t.nav.dashboard)}
+                    </Link>
                     <button onClick={handleLogout} className="text-slate-400 hover:text-white transition-colors">{t.nav.logout}</button>
                   </>
                 ) : (
@@ -301,12 +308,16 @@ const AppContent: React.FC = () => {
                       {user ? (
                         <>
                           <Link 
-                            to="/dashboard" 
+                            to={user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? "/admin" : "/dashboard"} 
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="flex items-center gap-3 p-4 bg-black rounded-2xl border border-white/5 text-slate-300 hover:text-neon-cyan transition-all"
                           >
-                            <LayoutDashboard size={18} />
-                            <span className="font-black uppercase tracking-widest text-xs">{t.nav.dashboard}</span>
+                            {user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? <Shield size={18} /> : <LayoutDashboard size={18} />}
+                            <span className="font-black uppercase tracking-widest text-xs">
+                              {user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
+                                ? t.nav.admin 
+                                : (user.role === 'trainer' ? t.dashboard.trainerDashboard : t.nav.dashboard)}
+                            </span>
                           </Link>
                           <button 
                             onClick={() => {

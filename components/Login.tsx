@@ -34,7 +34,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         const user = await response.json();
         localStorage.setItem('user', JSON.stringify(user));
         onLogin(user);
-        navigate('/dashboard');
+        
+        if (user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         const data = await response.json();
         alert(data.message || 'Authentication failed');
