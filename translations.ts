@@ -8,6 +8,7 @@ export const translations = {
       dashboard: 'Dashboard',
       logout: 'Logout',
       loginRegister: 'Login / Register',
+      admin: 'Admin',
     },
     hero: {
       title: 'Find your perfect match in personal training.',
@@ -48,7 +49,7 @@ export const translations = {
       welcome: 'Welcome,',
       trainerDashboard: 'Trainer Dashboard',
       manageClients: 'Manage your neon clients and create high-performance programs.',
-      trackProgress: 'Track your neon progress and view your personalized plans.',
+      trackProgress: 'Unleash your potential. Every drop of sweat is a step closer to your greatness.',
       editProfile: 'Edit My Profile',
       newRequests: 'New Requests',
       myClients: 'My Clients',
@@ -136,6 +137,7 @@ export const translations = {
       dashboard: 'Kontrolpanel',
       logout: 'Log ud',
       loginRegister: 'Log ind / Tilmeld',
+      admin: 'Admin',
     },
     hero: {
       title: 'Find dit perfekte match inden for personlig træning.',
@@ -176,7 +178,7 @@ export const translations = {
       welcome: 'Velkommen,',
       trainerDashboard: 'Træner Kontrolpanel',
       manageClients: 'Administrer dine neon-klienter og opret højtydende programmer.',
-      trackProgress: 'Følg dine neon-fremskridt og se dine personlige planer.',
+      trackProgress: 'Frigør dit potentiale. Hver dråbe sved er et skridt tættere på din storhed.',
       editProfile: 'Rediger Min Profil',
       newRequests: 'Nye Anmodninger',
       myClients: 'Mine Klienter',
