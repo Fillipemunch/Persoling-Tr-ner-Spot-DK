@@ -1,0 +1,8 @@
+{
+  "name": "Persoling Træner Spot DK",
+  "description": "A premium marketplace for finding personal trainers in Denmark, featuring an AI-powered fitness consultant.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
