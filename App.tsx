@@ -208,11 +208,6 @@ const AppContent: React.FC = () => {
                 <Link to="/" className="hover:text-neon-cyan transition-colors">{t.nav.findTrainers}</Link>
                 {user ? (
                   <>
-                    {user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' && (
-                      <Link to="/admin" className="text-neon-purple hover:text-white transition-colors font-black uppercase tracking-widest text-[10px] border border-neon-purple/50 px-2 py-1 rounded">
-                        {t.nav.admin}
-                      </Link>
-                    )}
                     <Link to="/dashboard" className="hover:text-neon-cyan transition-colors">{t.nav.dashboard}</Link>
                     <button onClick={handleLogout} className="text-slate-400 hover:text-white transition-colors">{t.nav.logout}</button>
                   </>
@@ -305,16 +300,6 @@ const AppContent: React.FC = () => {
                       
                       {user ? (
                         <>
-                          {user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' && (
-                            <Link 
-                              to="/admin" 
-                              onClick={() => setIsMobileMenuOpen(false)}
-                              className="flex items-center gap-3 p-4 bg-black rounded-2xl border border-neon-purple/20 text-neon-purple hover:text-white transition-all"
-                            >
-                              <Shield size={18} />
-                              <span className="font-black uppercase tracking-widest text-xs">{t.nav.admin}</span>
-                            </Link>
-                          )}
                           <Link 
                             to="/dashboard" 
                             onClick={() => setIsMobileMenuOpen(false)}
@@ -358,7 +343,13 @@ const AppContent: React.FC = () => {
 
         <Routes>
           <Route path="/" element={<Marketplace filters={filters} setFilters={setFilters} />} />
-          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login onLogin={setUser} />} />
+          <Route path="/login" element={
+            user ? (
+              user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
+                ? <Navigate to="/admin" /> 
+                : <Navigate to="/dashboard" />
+            ) : <Login onLogin={setUser} />
+          } />
           <Route path="/dashboard" element={
             user ? (
               user.role === 'client' ? <ClientDashboard user={user} /> : <TrainerDashboard user={user} />
