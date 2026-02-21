@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket } from "ws";
 import { createServer } from "http";
-import { User, ClientProfile, TrainingPlan, DietPlan, ChatMessage } from "./types";
+import { User, ClientProfile, TrainingPlan, DietPlan, ChatMessage, HireRequest } from "./types";
 
 const app = express();
 const httpServer = createServer(app);

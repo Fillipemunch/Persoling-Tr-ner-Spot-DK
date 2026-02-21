@@ -11,6 +11,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const { t } = useLanguage();
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState<UserRole>('client');
   const [loading, setLoading] = useState(false);
@@ -51,8 +52,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setLoading(false);
     }
   };
-
-  const [password, setPassword] = useState('');
 
   return (
     <div className="flex-1 flex items-center justify-center p-4 bg-black">
