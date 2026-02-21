@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SPECIALTIES, LOCATIONS } from './constants';
 import { FilterOptions, User } from './types';
 import TrainerCard from './components/TrainerCard';
-import AIAssistant from './components/AIAssistant';
 import Login from './components/Login';
 import ClientDashboard from './components/ClientDashboard';
 import TrainerDashboard from './components/TrainerDashboard';
@@ -391,7 +390,6 @@ const AppContent: React.FC = () => {
         </footer>
 
         {/* Floating Elements */}
-        <AIAssistant />
       </div>
     </BrowserRouter>
   );

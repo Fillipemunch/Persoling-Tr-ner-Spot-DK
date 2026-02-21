@@ -122,14 +122,6 @@ export const translations = {
       privacy: 'Privacy Policy',
       rights: 'All rights reserved.',
     },
-    ai: {
-      greeting: 'Hej! I am your Persoling Træner Spot AI. How can I help you reach your fitness goals today?',
-      consultant: 'Neon Consultant',
-      askAnything: 'Ask me anything...',
-      thinking: 'AI is thinking...',
-      askAi: 'Ask AI',
-      typeMessage: 'Type a message...',
-    }
   },
   da: {
     nav: {
@@ -251,13 +243,5 @@ export const translations = {
       privacy: 'Privatlivspolitik',
       rights: 'Alle rettigheder forbeholdes.',
     },
-    ai: {
-      greeting: 'Hej! Jeg er din Persoling Træner Spot AI. Hvordan kan jeg hjælpe dig med at nå dine fitnessmål i dag?',
-      consultant: 'Neon Konsulent',
-      askAnything: 'Spørg mig om hvad som helst...',
-      thinking: 'AI tænker...',
-      askAi: 'Spørg AI',
-      typeMessage: 'Skriv en besked...',
-    }
   }
 };
