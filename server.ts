@@ -74,7 +74,9 @@ wss.on("connection", (ws, req) => {
 // Auth Routes
 app.post("/api/auth/register", (req, res) => {
   const { email, name, role, password } = req.body;
+  console.log(`Registration attempt: ${email}, role: ${role}`);
   if (users.find(u => u.email === email)) {
+    console.log(`Registration failed: Email ${email} already exists`);
     return res.status(400).json({ message: "Email already exists" });
   }
   const newUser: User = {
@@ -87,15 +89,19 @@ app.post("/api/auth/register", (req, res) => {
     trainerStatus: 'none'
   };
   users.push(newUser);
+  console.log(`Registration successful: ${email}`);
   res.json(newUser);
 });
 
 app.post("/api/auth/login", (req, res) => {
   const { email, password } = req.body;
+  console.log(`Login attempt: ${email}`);
   const user = users.find(u => u.email === email && u.password === password);
   if (user) {
+    console.log(`Login successful: ${email}`);
     res.json(user);
   } else {
+    console.log(`Login failed: Invalid credentials for ${email}`);
     res.status(401).json({ message: "Invalid credentials" });
   }
 });
