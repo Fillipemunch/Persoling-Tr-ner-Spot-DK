@@ -9,7 +9,6 @@ import serverless from "serverless-http";
 import { User, ClientProfile, TrainingPlan, DietPlan, ChatMessage, HireRequest } from "./types";
 
 const app = express();
-const httpServer = createServer(app);
 const PORT = 3000;
 const DB_FILE = path.join(process.cwd(), 'db.json');
 
@@ -397,6 +396,7 @@ app.delete("/api/admin/users/:userId", (req, res) => {
 });
 
 async function startServer() {
+  const httpServer = createServer(app);
   if (process.env.NODE_ENV !== "production" && !process.env.NETLIFY) {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
