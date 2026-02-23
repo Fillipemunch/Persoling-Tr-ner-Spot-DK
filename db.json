@@ -1,0 +1,18 @@
+{
+  "users": [
+    {
+      "id": "admin-001",
+      "email": "fillipeferreiramunch@gmail.com",
+      "name": "Fillipe Ferreira (Admin)",
+      "role": "admin",
+      "password": "admin",
+      "imageUrl": "https://picsum.photos/seed/admin/200",
+      "trainerStatus": "accepted"
+    }
+  ],
+  "clientProfiles": [],
+  "trainingPlans": [],
+  "dietPlans": [],
+  "chatMessages": [],
+  "hireRequests": []
+}
