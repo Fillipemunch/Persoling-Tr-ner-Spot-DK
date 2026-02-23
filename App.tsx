@@ -58,7 +58,12 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
 
   const isSearching = filters.search !== '' || filters.specialty !== '' || filters.location !== '';
 
-  if (loading) return <div className="flex-1 flex items-center justify-center text-slate-500">{t.filters.showing}...</div>;
+  if (loading) return (
+    <div className="flex-1 flex flex-col items-center justify-center py-20">
+      <div className="w-12 h-12 border-4 border-neon-cyan border-t-transparent rounded-full animate-spin mb-4"></div>
+      <div className="text-slate-500 font-black uppercase tracking-widest text-xs">{t.filters.showing}...</div>
+    </div>
+  );
 
   return (
     <>
@@ -122,7 +127,7 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1 w-full">
-        {isSearching && (
+        {isSearching && trainers.length > 0 && (
           <div className="flex justify-between items-center mb-8">
             <p className="text-slate-500 text-sm font-medium">
               {t.filters.showing} <span className="text-neon-cyan">{filteredTrainers.length}</span> {t.filters.trainers}
@@ -137,18 +142,25 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
               <TrainerCard key={trainer.id} trainer={trainer} />
             ))}
           </div>
-        ) : isSearching ? (
-          <div className="text-center py-20 bg-slate-800/50 rounded-3xl border border-dashed border-slate-700">
-            <h3 className="text-xl font-bold mb-2">{t.filters.noTrainers}</h3>
-            <p className="text-slate-500">{t.filters.adjustFilters}</p>
-            <button 
-              onClick={() => setFilters({search: '', location: '', specialty: ''})}
-              className="mt-6 text-blue-400 hover:underline font-semibold"
-            >
-              {t.filters.clearFilters}
-            </button>
+        ) : (
+          <div className="text-center py-20 bg-slate-900/30 rounded-3xl border border-dashed border-slate-800">
+            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="text-slate-600" size={32} />
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-widest mb-2">{t.filters.noTrainers}</h3>
+            <p className="text-slate-500 text-sm font-medium max-w-xs mx-auto">
+              {isSearching ? t.filters.adjustFilters : "We are currently onboarding new trainers. Check back soon!"}
+            </p>
+            {isSearching && (
+              <button 
+                onClick={() => setFilters({search: '', location: '', specialty: ''})}
+                className="mt-6 text-neon-cyan hover:text-white font-black uppercase tracking-widest text-xs transition-colors"
+              >
+                {t.filters.clearFilters}
+              </button>
+            )}
           </div>
-        ) : null}
+        )}
       </main>
     </>
   );
