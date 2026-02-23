@@ -5,35 +5,27 @@ import { createServer } from "http";
 import fs from "fs";
 import path from "path";
 import serverless from "serverless-http";
+import { createClient } from "@supabase/supabase-js";
 import { User, ClientProfile, TrainingPlan, DietPlan, ChatMessage, HireRequest } from "./types";
 
 const app = express();
 const PORT = 3000;
-const DB_FILE = path.join(process.cwd(), 'db.json');
 
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
+// Supabase Configuration
+const supabaseUrl = process.env.SUPABASE_URL || 'https://jjcqbyptpqwiznburozt.supabase.co';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 // --- DATABASE PERSISTENCE NOTE ---
-// On Netlify, the filesystem is read-only and ephemeral. 
-// db.json will NOT persist data between sessions or deploys.
-// TO FIX: Connect to a real database (MongoDB, PostgreSQL, etc.) 
-// using the DATABASE_URL environment variable.
+// We are now using Supabase for persistence.
 // ---------------------------------
 
-// Mock Database (Fallback)
+// Mock Database (Fallback for non-auth data if tables aren't ready, but we'll try to use Supabase)
 let db = {
-  users: [
-    {
-      id: 'admin-001',
-      email: 'fillipeferreiramunch@gmail.com',
-      name: 'Fillipe Ferreira (Admin)',
-      role: 'admin',
-      password: 'admin',
-      imageUrl: 'https://picsum.photos/seed/admin/200',
-      trainerStatus: 'accepted'
-    }
-  ],
+  users: [],
   clientProfiles: [],
   trainingPlans: [],
   dietPlans: [],
@@ -111,41 +103,72 @@ if (process.env.NODE_ENV !== "production" && !process.env.NETLIFY) {
 }
 
 // Auth Routes
-app.post("/api/auth/register", (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
   const { email, name, role, password } = req.body;
   console.log(`Registration attempt: ${email}, role: ${role}`);
-  if (users.find(u => u.email === email)) {
-    console.log(`Registration failed: Email ${email} already exists`);
-    return res.status(400).json({ message: "Email already exists" });
-  }
-  const newUser: User = {
-    id: Math.random().toString(36).substr(2, 9),
+
+  const { data, error } = await supabase.auth.signUp({
     email,
+    password,
+    options: {
+      data: {
+        name,
+        role,
+        imageUrl: `https://picsum.photos/seed/${email}/200`,
+        trainerStatus: 'none'
+      }
+    }
+  });
+
+  if (error) {
+    console.error("Supabase registration error:", error.message);
+    return res.status(400).json({ message: error.message });
+  }
+
+  const newUser: User = {
+    id: data.user?.id || '',
+    email: data.user?.email || email,
     name,
     role,
-    password, // In a real app, hash this!
-    imageUrl: `https://picsum.photos/seed/${email}/200`,
+    imageUrl: data.user?.user_metadata?.imageUrl,
     trainerStatus: 'none'
   };
-  users.push(newUser);
-  saveDB();
+
+  // In a real app, you'd also insert into a 'profiles' table here
+  // For now we'll return the user object
+  
   logActivity('USER_REGISTER', `New user registered: ${name} (${role})`);
   console.log(`Registration successful: ${email}`);
   res.json(newUser);
 });
 
-app.post("/api/auth/login", (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   console.log(`Login attempt: ${email}`);
-  const user = users.find(u => u.email === email && u.password === password);
-  if (user) {
-    console.log(`Login successful: ${email}`);
-    logActivity('USER_LOGIN', `User logged in: ${user.name}`);
-    res.json(user);
-  } else {
-    console.log(`Login failed: Invalid credentials for ${email}`);
-    res.status(401).json({ message: "Invalid credentials" });
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    console.log(`Login failed: ${error.message}`);
+    return res.status(401).json({ message: error.message });
   }
+
+  const user: User = {
+    id: data.user?.id || '',
+    email: data.user?.email || email,
+    name: data.user?.user_metadata?.name,
+    role: data.user?.user_metadata?.role,
+    imageUrl: data.user?.user_metadata?.imageUrl,
+    trainerStatus: data.user?.user_metadata?.trainerStatus || 'none',
+    trainerId: data.user?.user_metadata?.trainerId
+  };
+
+  console.log(`Login successful: ${email}`);
+  logActivity('USER_LOGIN', `User logged in: ${user.name}`);
+  res.json(user);
 });
 
 // Profile Routes
