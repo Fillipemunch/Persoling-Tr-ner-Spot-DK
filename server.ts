@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket } from "ws";
 import { createServer } from "http";
 import fs from "fs";
@@ -107,46 +106,48 @@ function logActivity(type: string, description: string) {
   saveDB();
 }
 
-// WebSocket Server
-const wss = new WebSocketServer({ server: httpServer });
-const clients = new Map<string, WebSocket>();
+// WebSocket Server (Only in non-serverless)
+if (process.env.NODE_ENV !== "production" || !process.env.NETLIFY) {
+  const wss = new WebSocketServer({ server: httpServer });
+  const clients = new Map<string, WebSocket>();
 
-wss.on("connection", (ws, req) => {
-  let userId: string | null = null;
+  wss.on("connection", (ws, req) => {
+    let userId: string | null = null;
 
-  ws.on("message", (data) => {
-    const message = JSON.parse(data.toString());
-    
-    if (message.type === "auth") {
-      userId = message.userId;
-      if (userId) clients.set(userId, ws);
-    }
-
-    if (message.type === "chat") {
-      const chatMsg: ChatMessage = {
-        id: Math.random().toString(36).substr(2, 9),
-        senderId: message.senderId,
-        receiverId: message.receiverId,
-        text: message.text,
-        timestamp: new Date().toISOString()
-      };
-      chatMessages.push(chatMsg);
-      saveDB();
-
-      // Send to receiver if online
-      const receiverWs = clients.get(message.receiverId);
-      if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
-        receiverWs.send(JSON.stringify({ type: "chat", message: chatMsg }));
+    ws.on("message", (data) => {
+      const message = JSON.parse(data.toString());
+      
+      if (message.type === "auth") {
+        userId = message.userId;
+        if (userId) clients.set(userId, ws);
       }
-      // Send back to sender for confirmation
-      ws.send(JSON.stringify({ type: "chat", message: chatMsg }));
-    }
-  });
 
-  ws.on("close", () => {
-    if (userId) clients.delete(userId);
+      if (message.type === "chat") {
+        const chatMsg: ChatMessage = {
+          id: Math.random().toString(36).substr(2, 9),
+          senderId: message.senderId,
+          receiverId: message.receiverId,
+          text: message.text,
+          timestamp: new Date().toISOString()
+        };
+        chatMessages.push(chatMsg);
+        saveDB();
+
+        // Send to receiver if online
+        const receiverWs = clients.get(message.receiverId);
+        if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
+          receiverWs.send(JSON.stringify({ type: "chat", message: chatMsg }));
+        }
+        // Send back to sender for confirmation
+        ws.send(JSON.stringify({ type: "chat", message: chatMsg }));
+      }
+    });
+
+    ws.on("close", () => {
+      if (userId) clients.delete(userId);
+    });
   });
-});
+}
 
 // Auth Routes
 app.post("/api/auth/register", (req, res) => {
@@ -342,6 +343,20 @@ app.get("/api/chat/:userId/:otherId", (req, res) => {
   res.json(messages);
 });
 
+app.post("/api/chat", (req, res) => {
+  const { senderId, receiverId, text } = req.body;
+  const chatMsg: ChatMessage = {
+    id: Math.random().toString(36).substr(2, 9),
+    senderId,
+    receiverId,
+    text,
+    timestamp: new Date().toISOString()
+  };
+  chatMessages.push(chatMsg);
+  saveDB();
+  res.json(chatMsg);
+});
+
 // Admin Routes
 app.get("/api/admin/stats", (req, res) => {
   const stats = {
@@ -382,7 +397,8 @@ app.delete("/api/admin/users/:userId", (req, res) => {
 });
 
 async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && !process.env.NETLIFY) {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
