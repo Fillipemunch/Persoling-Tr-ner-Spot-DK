@@ -53,6 +53,7 @@ const trainingPlans: TrainingPlan[] = db.trainingPlans;
 const dietPlans: DietPlan[] = db.dietPlans;
 const chatMessages: ChatMessage[] = db.chatMessages;
 const hireRequests: HireRequest[] = db.hireRequests;
+const activities: { id: string; type: string; description: string; timestamp: string }[] = db.activities || [];
 
 function saveDB() {
   try {
@@ -62,11 +63,23 @@ function saveDB() {
       trainingPlans,
       dietPlans,
       chatMessages,
-      hireRequests
+      hireRequests,
+      activities
     }, null, 2));
   } catch (e) {
     console.error("Error saving DB:", e);
   }
+}
+
+function logActivity(type: string, description: string) {
+  activities.unshift({
+    id: Math.random().toString(36).substr(2, 9),
+    type,
+    description,
+    timestamp: new Date().toISOString()
+  });
+  if (activities.length > 50) activities.pop();
+  saveDB();
 }
 
 // WebSocket Server
@@ -129,6 +142,7 @@ app.post("/api/auth/register", (req, res) => {
   };
   users.push(newUser);
   saveDB();
+  logActivity('USER_REGISTER', `New user registered: ${name} (${role})`);
   console.log(`Registration successful: ${email}`);
   res.json(newUser);
 });
@@ -139,6 +153,7 @@ app.post("/api/auth/login", (req, res) => {
   const user = users.find(u => u.email === email && u.password === password);
   if (user) {
     console.log(`Login successful: ${email}`);
+    logActivity('USER_LOGIN', `User logged in: ${user.name}`);
     res.json(user);
   } else {
     console.log(`Login failed: Invalid credentials for ${email}`);
@@ -209,6 +224,7 @@ app.post("/api/trainers/request-hire", (req, res) => {
   users[clientIndex].trainerId = trainerId;
   users[clientIndex].trainerStatus = 'pending';
   saveDB();
+  logActivity('HIRE_REQUEST', `Client requested to hire a trainer`);
   
   res.json({ user: users[clientIndex], request });
 });
@@ -254,6 +270,7 @@ app.post("/api/plans/training", (req, res) => {
   };
   trainingPlans.push(plan);
   saveDB();
+  logActivity('PLAN_CREATED', `Training plan created for client`);
   res.json(plan);
 });
 
@@ -265,6 +282,7 @@ app.post("/api/plans/diet", (req, res) => {
   };
   dietPlans.push(plan);
   saveDB();
+  logActivity('PLAN_CREATED', `Diet plan created for client`);
   res.json(plan);
 });
 
@@ -300,6 +318,29 @@ app.get("/api/chat/:userId/:otherId", (req, res) => {
 });
 
 // Admin Routes
+app.get("/api/admin/stats", (req, res) => {
+  const stats = {
+    totalUsers: users.length,
+    totalTrainers: users.filter(u => u.role === 'trainer').length,
+    totalClients: users.filter(u => u.role === 'client').length,
+    totalPlans: trainingPlans.length + dietPlans.length,
+    totalTrainingPlans: trainingPlans.length,
+    totalDietPlans: dietPlans.length,
+    totalRequests: hireRequests.length,
+    pendingRequests: hireRequests.filter(r => r.status === 'pending').length,
+    acceptedRequests: hireRequests.filter(r => r.status === 'accepted').length,
+    totalMessages: chatMessages.length,
+    recentActivities: activities.slice(0, 10),
+    system: {
+      nodeVersion: process.version,
+      platform: process.platform,
+      uptime: process.uptime(),
+      memoryUsage: process.memoryUsage()
+    }
+  };
+  res.json(stats);
+});
+
 app.get("/api/admin/users", (req, res) => {
   res.json(users);
 });
