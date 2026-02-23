@@ -25,17 +25,20 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
   const fetchTrainers = async () => {
     try {
       const res = await fetch('/api/trainers');
+      if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
-      setTrainers(data);
+      setTrainers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
+      setTrainers([]);
     } finally {
       setLoading(false);
     }
   };
 
   const filteredTrainers = useMemo(() => {
-    const allTrainers = trainers.map(t => ({
+    const trainersList = Array.isArray(trainers) ? trainers : [];
+    const allTrainers = trainersList.map(t => ({
       ...t,
       rating: 5.0,
       reviewCount: 0,

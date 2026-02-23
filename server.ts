@@ -204,13 +204,23 @@ app.get("/api/clients/profile/:userId", (req, res) => {
 
 // Trainer Routes
 app.get("/api/trainers", (req, res) => {
-  const trainers = users.filter(u => u.role === 'trainer');
-  res.json(trainers);
+  try {
+    const trainers = Array.isArray(users) ? users.filter(u => u.role === 'trainer') : [];
+    res.json(trainers);
+  } catch (err) {
+    console.error("Error fetching trainers:", err);
+    res.json([]);
+  }
 });
 
 app.get("/api/trainers/clients/:trainerId", (req, res) => {
-  const trainerClients = users.filter(u => u.trainerId === req.params.trainerId && u.trainerStatus === 'accepted');
-  res.json(trainerClients);
+  try {
+    const trainerClients = Array.isArray(users) ? users.filter(u => u.trainerId === req.params.trainerId && u.trainerStatus === 'accepted') : [];
+    res.json(trainerClients);
+  } catch (err) {
+    console.error("Error fetching trainer clients:", err);
+    res.json([]);
+  }
 });
 
 app.post("/api/trainers/request-hire", (req, res) => {
@@ -240,12 +250,17 @@ app.post("/api/trainers/request-hire", (req, res) => {
 });
 
 app.get("/api/trainers/requests/:trainerId", (req, res) => {
-  const requests = hireRequests.filter(r => r.trainerId === req.params.trainerId && r.status === 'pending');
-  const clientsWithRequests = requests.map(r => {
-    const client = users.find(u => u.id === r.clientId);
-    return { ...client, requestId: r.id };
-  });
-  res.json(clientsWithRequests);
+  try {
+    const requests = Array.isArray(hireRequests) ? hireRequests.filter(r => r.trainerId === req.params.trainerId && r.status === 'pending') : [];
+    const clientsWithRequests = requests.map(r => {
+      const client = Array.isArray(users) ? users.find(u => u.id === r.clientId) : null;
+      return { ...client, requestId: r.id };
+    }).filter(c => c !== null);
+    res.json(clientsWithRequests);
+  } catch (err) {
+    console.error("Error fetching trainer requests:", err);
+    res.json([]);
+  }
 });
 
 app.post("/api/trainers/respond-request", (req, res) => {
@@ -297,9 +312,14 @@ app.post("/api/plans/diet", (req, res) => {
 });
 
 app.get("/api/plans/:clientId", (req, res) => {
-  const training = trainingPlans.filter(p => p.clientId === req.params.clientId);
-  const diet = dietPlans.filter(p => p.clientId === req.params.clientId);
-  res.json({ training, diet });
+  try {
+    const training = Array.isArray(trainingPlans) ? trainingPlans.filter(p => p.clientId === req.params.clientId) : [];
+    const diet = Array.isArray(dietPlans) ? dietPlans.filter(p => p.clientId === req.params.clientId) : [];
+    res.json({ training, diet });
+  } catch (err) {
+    console.error("Error fetching plans:", err);
+    res.json({ training: [], diet: [] });
+  }
 });
 
 // Chat Routes
@@ -343,30 +363,40 @@ app.post("/api/chat", (req, res) => {
 
 // Admin Routes
 app.get("/api/admin/stats", (req, res) => {
-  const stats = {
-    totalUsers: users.length,
-    totalTrainers: users.filter(u => u.role === 'trainer').length,
-    totalClients: users.filter(u => u.role === 'client').length,
-    totalPlans: trainingPlans.length + dietPlans.length,
-    totalTrainingPlans: trainingPlans.length,
-    totalDietPlans: dietPlans.length,
-    totalRequests: hireRequests.length,
-    pendingRequests: hireRequests.filter(r => r.status === 'pending').length,
-    acceptedRequests: hireRequests.filter(r => r.status === 'accepted').length,
-    totalMessages: chatMessages.length,
-    recentActivities: activities.slice(0, 10),
-    system: {
-      nodeVersion: process.version,
-      platform: process.platform,
-      uptime: process.uptime(),
-      memoryUsage: process.memoryUsage()
-    }
-  };
-  res.json(stats);
+  try {
+    const stats = {
+      totalUsers: Array.isArray(users) ? users.length : 0,
+      totalTrainers: Array.isArray(users) ? users.filter(u => u.role === 'trainer').length : 0,
+      totalClients: Array.isArray(users) ? users.filter(u => u.role === 'client').length : 0,
+      totalPlans: (Array.isArray(trainingPlans) ? trainingPlans.length : 0) + (Array.isArray(dietPlans) ? dietPlans.length : 0),
+      totalTrainingPlans: Array.isArray(trainingPlans) ? trainingPlans.length : 0,
+      totalDietPlans: Array.isArray(dietPlans) ? dietPlans.length : 0,
+      totalRequests: Array.isArray(hireRequests) ? hireRequests.length : 0,
+      pendingRequests: Array.isArray(hireRequests) ? hireRequests.filter(r => r.status === 'pending').length : 0,
+      acceptedRequests: Array.isArray(hireRequests) ? hireRequests.filter(r => r.status === 'accepted').length : 0,
+      totalMessages: Array.isArray(chatMessages) ? chatMessages.length : 0,
+      recentActivities: Array.isArray(activities) ? activities.slice(0, 10) : [],
+      system: {
+        nodeVersion: process.version,
+        platform: process.platform,
+        uptime: process.uptime(),
+        memoryUsage: process.memoryUsage()
+      }
+    };
+    res.json(stats);
+  } catch (err) {
+    console.error("Error fetching admin stats:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 app.get("/api/admin/users", (req, res) => {
-  res.json(users);
+  try {
+    res.json(Array.isArray(users) ? users : []);
+  } catch (err) {
+    console.error("Error fetching admin users:", err);
+    res.json([]);
+  }
 });
 
 app.delete("/api/admin/users/:userId", (req, res) => {

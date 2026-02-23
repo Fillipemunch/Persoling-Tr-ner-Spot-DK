@@ -39,12 +39,16 @@ const AdminDashboard: React.FC = () => {
         fetch('/api/admin/users'),
         fetch('/api/admin/stats')
       ]);
-      const usersData = await usersRes.json();
-      const statsData = await statsRes.json();
-      setUsers(usersData);
+      
+      const usersData = usersRes.ok ? await usersRes.json() : [];
+      const statsData = statsRes.ok ? await statsRes.json() : null;
+      
+      setUsers(Array.isArray(usersData) ? usersData : []);
       setStats(statsData);
     } catch (err) {
       console.error(err);
+      setUsers([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }

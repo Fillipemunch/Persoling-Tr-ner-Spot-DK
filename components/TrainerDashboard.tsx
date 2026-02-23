@@ -27,15 +27,27 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
   const [trainerCerts, setTrainerCerts] = useState(user.certifications?.join(', ') || '');
 
   const fetchClients = async () => {
-    const res = await fetch(`/api/trainers/clients/${user.id}`);
-    const data = await res.json();
-    setClients(data);
+    try {
+      const res = await fetch(`/api/trainers/clients/${user.id}`);
+      if (!res.ok) throw new Error('Failed to fetch clients');
+      const data = await res.json();
+      setClients(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      setClients([]);
+    }
   };
 
   const fetchRequests = async () => {
-    const res = await fetch(`/api/trainers/requests/${user.id}`);
-    const data = await res.json();
-    setPendingRequests(data);
+    try {
+      const res = await fetch(`/api/trainers/requests/${user.id}`);
+      if (!res.ok) throw new Error('Failed to fetch requests');
+      const data = await res.json();
+      setPendingRequests(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      setPendingRequests([]);
+    }
   };
 
   const fetchClientProfile = async (clientId: string) => {

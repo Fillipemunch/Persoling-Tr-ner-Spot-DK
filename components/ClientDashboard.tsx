@@ -35,16 +35,32 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
   };
 
   const fetchPlans = async () => {
-    const res = await fetch(`/api/plans/${user.id}`);
-    const data = await res.json();
-    setPlans(data);
+    try {
+      const res = await fetch(`/api/plans/${user.id}`);
+      if (!res.ok) throw new Error('Failed to fetch plans');
+      const data = await res.json();
+      setPlans({
+        training: Array.isArray(data?.training) ? data.training : [],
+        diet: Array.isArray(data?.diet) ? data.diet : []
+      });
+    } catch (err) {
+      console.error(err);
+      setPlans({ training: [], diet: [] });
+    }
   };
 
   const fetchTrainer = async () => {
-    const res = await fetch('/api/trainers');
-    const trainers: User[] = await res.json();
-    const myTrainer = trainers.find(t => t.id === user.trainerId);
-    if (myTrainer) setTrainer(myTrainer);
+    try {
+      const res = await fetch('/api/trainers');
+      if (!res.ok) throw new Error('Failed to fetch trainers');
+      const trainers: User[] = await res.json();
+      if (Array.isArray(trainers)) {
+        const myTrainer = trainers.find(t => t.id === user.trainerId);
+        if (myTrainer) setTrainer(myTrainer);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
