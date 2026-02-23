@@ -4,32 +4,70 @@ import bodyParser from "body-parser";
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket } from "ws";
 import { createServer } from "http";
+import fs from "fs";
+import path from "path";
 import { User, ClientProfile, TrainingPlan, DietPlan, ChatMessage, HireRequest } from "./types";
 
 const app = express();
 const httpServer = createServer(app);
 const PORT = 3000;
+const DB_FILE = path.join(process.cwd(), 'db.json');
 
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
-// Mock Database
-const users: User[] = [
-  {
-    id: 'admin-001',
-    email: 'fillipeferreiramunch@gmail.com',
-    name: 'Fillipe Ferreira (Admin)',
-    role: 'admin',
-    password: 'admin', // Default password for your first login
-    imageUrl: 'https://picsum.photos/seed/admin/200',
-    trainerStatus: 'accepted'
+// Persistence Helpers
+function loadDB() {
+  if (fs.existsSync(DB_FILE)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+      return data;
+    } catch (e) {
+      console.error("Error loading DB:", e);
+    }
   }
-];
-const clientProfiles: ClientProfile[] = [];
-const trainingPlans: TrainingPlan[] = [];
-const dietPlans: DietPlan[] = [];
-const chatMessages: ChatMessage[] = [];
-const hireRequests: HireRequest[] = [];
+  return {
+    users: [
+      {
+        id: 'admin-001',
+        email: 'fillipeferreiramunch@gmail.com',
+        name: 'Fillipe Ferreira (Admin)',
+        role: 'admin',
+        password: 'admin', // Default password for your first login
+        imageUrl: 'https://picsum.photos/seed/admin/200',
+        trainerStatus: 'accepted'
+      }
+    ],
+    clientProfiles: [],
+    trainingPlans: [],
+    dietPlans: [],
+    chatMessages: [],
+    hireRequests: []
+  };
+}
+
+const db = loadDB();
+const users: User[] = db.users;
+const clientProfiles: ClientProfile[] = db.clientProfiles;
+const trainingPlans: TrainingPlan[] = db.trainingPlans;
+const dietPlans: DietPlan[] = db.dietPlans;
+const chatMessages: ChatMessage[] = db.chatMessages;
+const hireRequests: HireRequest[] = db.hireRequests;
+
+function saveDB() {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify({
+      users,
+      clientProfiles,
+      trainingPlans,
+      dietPlans,
+      chatMessages,
+      hireRequests
+    }, null, 2));
+  } catch (e) {
+    console.error("Error saving DB:", e);
+  }
+}
 
 // WebSocket Server
 const wss = new WebSocketServer({ server: httpServer });
@@ -55,6 +93,7 @@ wss.on("connection", (ws, req) => {
         timestamp: new Date().toISOString()
       };
       chatMessages.push(chatMsg);
+      saveDB();
 
       // Send to receiver if online
       const receiverWs = clients.get(message.receiverId);
@@ -89,6 +128,7 @@ app.post("/api/auth/register", (req, res) => {
     trainerStatus: 'none'
   };
   users.push(newUser);
+  saveDB();
   console.log(`Registration successful: ${email}`);
   res.json(newUser);
 });
@@ -112,6 +152,7 @@ app.post("/api/users/profile", (req, res) => {
   const index = users.findIndex(u => u.id === userId);
   if (index !== -1) {
     users[index] = { ...users[index], ...updates };
+    saveDB();
     res.json(users[index]);
   } else {
     res.status(404).json({ message: "User not found" });
@@ -127,6 +168,7 @@ app.post("/api/clients/profile", (req, res) => {
   } else {
     clientProfiles.push(profile);
   }
+  saveDB();
   res.json(profile);
 });
 
@@ -166,6 +208,7 @@ app.post("/api/trainers/request-hire", (req, res) => {
   hireRequests.push(request);
   users[clientIndex].trainerId = trainerId;
   users[clientIndex].trainerStatus = 'pending';
+  saveDB();
   
   res.json({ user: users[clientIndex], request });
 });
@@ -199,6 +242,7 @@ app.post("/api/trainers/respond-request", (req, res) => {
   }
   
   res.json({ message: `Request ${status}`, client: users[clientIndex] });
+  saveDB();
 });
 
 // Plan Routes
@@ -209,6 +253,7 @@ app.post("/api/plans/training", (req, res) => {
     createdAt: new Date().toISOString()
   };
   trainingPlans.push(plan);
+  saveDB();
   res.json(plan);
 });
 
@@ -219,6 +264,7 @@ app.post("/api/plans/diet", (req, res) => {
     createdAt: new Date().toISOString()
   };
   dietPlans.push(plan);
+  saveDB();
   res.json(plan);
 });
 
@@ -262,6 +308,7 @@ app.delete("/api/admin/users/:userId", (req, res) => {
   const index = users.findIndex(u => u.id === req.params.userId);
   if (index !== -1) {
     users.splice(index, 1);
+    saveDB();
     res.json({ success: true });
   } else {
     res.status(404).json({ message: "User not found" });

@@ -56,6 +56,8 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
     });
   }, [filters, trainers]);
 
+  const isSearching = filters.search !== '' || filters.specialty !== '' || filters.location !== '';
+
   if (loading) return <div className="flex-1 flex items-center justify-center text-slate-500">{t.filters.showing}...</div>;
 
   return (
@@ -120,11 +122,13 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1 w-full">
-        <div className="flex justify-between items-center mb-8">
-          <p className="text-slate-500 text-sm font-medium">
-            {t.filters.showing} <span className="text-neon-cyan">{filteredTrainers.length}</span> {t.filters.trainers}
-          </p>
-        </div>
+        {isSearching && (
+          <div className="flex justify-between items-center mb-8">
+            <p className="text-slate-500 text-sm font-medium">
+              {t.filters.showing} <span className="text-neon-cyan">{filteredTrainers.length}</span> {t.filters.trainers}
+            </p>
+          </div>
+        )}
 
         {/* Grid */}
         {filteredTrainers.length > 0 ? (
@@ -133,7 +137,7 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
               <TrainerCard key={trainer.id} trainer={trainer} />
             ))}
           </div>
-        ) : (
+        ) : isSearching ? (
           <div className="text-center py-20 bg-slate-800/50 rounded-3xl border border-dashed border-slate-700">
             <h3 className="text-xl font-bold mb-2">{t.filters.noTrainers}</h3>
             <p className="text-slate-500">{t.filters.adjustFilters}</p>
@@ -144,7 +148,7 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
               {t.filters.clearFilters}
             </button>
           </div>
-        )}
+        ) : null}
       </main>
     </>
   );
