@@ -132,7 +132,7 @@ const Chat: React.FC<ChatProps> = ({ currentUser, otherUser }) => {
       </div>
 
       <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-4 bg-black">
-        {messages.map((m) => (
+        {Array.isArray(messages) && messages.map((m) => (
           <div key={m.id} className={`flex ${m.senderId === currentUser.id ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[80%] p-3 rounded-2xl text-[10px] font-black uppercase tracking-widest ${
               m.senderId === currentUser.id 

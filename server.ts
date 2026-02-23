@@ -324,27 +324,32 @@ app.get("/api/plans/:clientId", (req, res) => {
 
 // Chat Routes
 app.get("/api/chat/:userId/:otherId", (req, res) => {
-  const { userId, otherId } = req.params;
-  
-  // Check if they are connected
-  const user = users.find(u => u.id === userId);
-  const other = users.find(u => u.id === otherId);
-  
-  if (!user || !other) return res.status(404).json({ message: "User not found" });
-  
-  const isConnected = 
-    (user.role === 'client' && user.trainerId === otherId && user.trainerStatus === 'accepted') ||
-    (user.role === 'trainer' && other.trainerId === userId && other.trainerStatus === 'accepted');
+  try {
+    const { userId, otherId } = req.params;
     
-  if (!isConnected) {
-    return res.status(403).json({ message: "You are not connected to this user" });
-  }
+    // Check if they are connected
+    const user = Array.isArray(users) ? users.find(u => u.id === userId) : null;
+    const other = Array.isArray(users) ? users.find(u => u.id === otherId) : null;
+    
+    if (!user || !other) return res.status(404).json({ message: "User not found" });
+    
+    const isConnected = 
+      (user.role === 'client' && user.trainerId === otherId && user.trainerStatus === 'accepted') ||
+      (user.role === 'trainer' && other.trainerId === userId && other.trainerStatus === 'accepted');
+      
+    if (!isConnected) {
+      return res.status(403).json({ message: "You are not connected to this user" });
+    }
 
-  const messages = chatMessages.filter(m => 
-    (m.senderId === userId && m.receiverId === otherId) ||
-    (m.senderId === otherId && m.receiverId === userId)
-  ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-  res.json(messages);
+    const messages = Array.isArray(chatMessages) ? chatMessages.filter(m => 
+      (m.senderId === userId && m.receiverId === otherId) ||
+      (m.senderId === otherId && m.receiverId === userId)
+    ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()) : [];
+    res.json(messages);
+  } catch (err) {
+    console.error("Error fetching chat messages:", err);
+    res.json([]);
+  }
 });
 
 app.post("/api/chat", (req, res) => {

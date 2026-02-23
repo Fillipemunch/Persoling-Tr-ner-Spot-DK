@@ -213,7 +213,7 @@ const AdminDashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {users.map(user => (
+                {Array.isArray(users) && users.map(user => (
                   <tr key={user.id} className="group hover:bg-white/5 transition-colors">
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-3">
@@ -279,7 +279,7 @@ const AdminDashboard: React.FC = () => {
             <Activity className="text-neon-green" /> Recent Activity
           </h2>
           <div className="space-y-6">
-            {stats?.recentActivities && stats.recentActivities.length > 0 ? (
+            {stats?.recentActivities && Array.isArray(stats.recentActivities) && stats.recentActivities.length > 0 ? (
               stats.recentActivities.map((activity) => (
                 <div key={activity.id} className="relative pl-6 border-l border-white/10">
                   <div className="absolute left-[-5px] top-0 w-2 h-2 rounded-full bg-neon-green shadow-neon-green"></div>

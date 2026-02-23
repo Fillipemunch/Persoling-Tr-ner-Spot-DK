@@ -199,7 +199,7 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
                 <Plus className="w-4 h-4" /> {t.dashboard.newRequests}
               </h2>
               <div className="space-y-4">
-                {pendingRequests.map(req => (
+                {Array.isArray(pendingRequests) && pendingRequests.map(req => (
                   <div key={req.requestId} className="bg-black p-4 rounded-2xl border border-white/5">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-lg bg-slate-900 overflow-hidden border border-white/5">
@@ -233,7 +233,7 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
               <Users className="text-neon-cyan w-4 h-4" /> {t.dashboard.myClients}
             </h2>
             <div className="space-y-2">
-              {clients.length > 0 ? (
+              {Array.isArray(clients) && clients.length > 0 ? (
                 clients.map(client => (
                   <button
                     key={client.id}
@@ -372,7 +372,7 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
                     <Dumbbell className="text-neon-cyan" /> {t.dashboard.createTraining}
                   </h3>
                   <div className="space-y-4">
-                    {exercises.map((ex, i) => (
+                    {Array.isArray(exercises) && exercises.map((ex, i) => (
                       <div key={i} className="p-6 bg-black rounded-2xl border border-white/5 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                           <div className="md:col-span-2">
@@ -498,7 +498,7 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
                     <Utensils className="text-neon-pink" /> {t.dashboard.createDiet}
                   </h3>
                   <div className="space-y-4">
-                    {meals.map((meal, i) => (
+                    {Array.isArray(meals) && meals.map((meal, i) => (
                       <div key={i} className="p-6 bg-black rounded-2xl border border-white/5 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                           <div>

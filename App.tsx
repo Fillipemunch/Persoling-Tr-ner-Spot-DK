@@ -139,7 +139,7 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
         )}
 
         {/* Grid */}
-        {filteredTrainers.length > 0 ? (
+        {Array.isArray(filteredTrainers) && filteredTrainers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredTrainers.map(trainer => (
               <TrainerCard key={trainer.id} trainer={trainer} />

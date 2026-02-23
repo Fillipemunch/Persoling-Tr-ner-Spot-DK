@@ -248,13 +248,13 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
             <h2 className="text-xl font-black uppercase tracking-widest text-xs flex items-center gap-2 mb-6">
               <Dumbbell className="text-neon-cyan" /> {t.dashboard.trainingSeries}
             </h2>
-            {plans.training.length > 0 ? (
+            {Array.isArray(plans.training) && plans.training.length > 0 ? (
               <div className="space-y-4">
                 {plans.training.map(plan => (
                   <div key={plan.id} className="bg-black rounded-2xl p-6 border border-white/5">
                     <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4">{t.dashboard.createdOn} {new Date(plan.createdAt).toLocaleDateString()}</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {plan.exercises.map((ex, i) => (
+                      {Array.isArray(plan.exercises) && plan.exercises.map((ex, i) => (
                         <div key={i} className="flex flex-col p-4 bg-slate-900 rounded-xl border border-white/5 space-y-3">
                           <div className="flex justify-between items-start">
                             <div className="flex gap-3">
@@ -297,13 +297,13 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
             <h2 className="text-xl font-black uppercase tracking-widest text-xs flex items-center gap-2 mb-6">
               <Utensils className="text-neon-pink" /> {t.dashboard.nutritionPlan}
             </h2>
-            {plans.diet.length > 0 ? (
+            {Array.isArray(plans.diet) && plans.diet.length > 0 ? (
               <div className="space-y-4">
                 {plans.diet.map(plan => (
                   <div key={plan.id} className="bg-black rounded-2xl p-6 border border-white/5">
                     <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4">{t.dashboard.createdOn} {new Date(plan.createdAt).toLocaleDateString()}</div>
                     <div className="space-y-3">
-                      {plan.meals.map((meal, i) => (
+                      {Array.isArray(plan.meals) && plan.meals.map((meal, i) => (
                         <div key={i} className="flex flex-col p-4 bg-slate-900 rounded-xl border border-white/5 space-y-3">
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
