@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { WebSocketServer, WebSocket } from "ws";
 import { createServer } from "http";
 import fs from "fs";
 import path from "path";
@@ -106,46 +105,9 @@ function logActivity(type: string, description: string) {
 }
 
 // WebSocket Server (Only in non-serverless)
-if (process.env.NODE_ENV !== "production" || !process.env.NETLIFY) {
-  const wss = new WebSocketServer({ server: httpServer });
-  const clients = new Map<string, WebSocket>();
-
-  wss.on("connection", (ws, req) => {
-    let userId: string | null = null;
-
-    ws.on("message", (data) => {
-      const message = JSON.parse(data.toString());
-      
-      if (message.type === "auth") {
-        userId = message.userId;
-        if (userId) clients.set(userId, ws);
-      }
-
-      if (message.type === "chat") {
-        const chatMsg: ChatMessage = {
-          id: Math.random().toString(36).substr(2, 9),
-          senderId: message.senderId,
-          receiverId: message.receiverId,
-          text: message.text,
-          timestamp: new Date().toISOString()
-        };
-        chatMessages.push(chatMsg);
-        saveDB();
-
-        // Send to receiver if online
-        const receiverWs = clients.get(message.receiverId);
-        if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
-          receiverWs.send(JSON.stringify({ type: "chat", message: chatMsg }));
-        }
-        // Send back to sender for confirmation
-        ws.send(JSON.stringify({ type: "chat", message: chatMsg }));
-      }
-    });
-
-    ws.on("close", () => {
-      if (userId) clients.delete(userId);
-    });
-  });
+let wss: any;
+if (process.env.NODE_ENV !== "production" && !process.env.NETLIFY) {
+  // We'll initialize this inside startServer to share the httpServer
 }
 
 // Auth Routes
@@ -397,7 +359,44 @@ app.delete("/api/admin/users/:userId", (req, res) => {
 
 async function startServer() {
   const httpServer = createServer(app);
+
   if (process.env.NODE_ENV !== "production" && !process.env.NETLIFY) {
+    // Initialize WebSockets
+    const { WebSocketServer, WebSocket } = await import("ws");
+    const wss = new WebSocketServer({ server: httpServer });
+    const clients = new Map<string, any>();
+
+    wss.on("connection", (ws, req) => {
+      let userId: string | null = null;
+      ws.on("message", (data) => {
+        const message = JSON.parse(data.toString());
+        if (message.type === "auth") {
+          userId = message.userId;
+          if (userId) clients.set(userId, ws);
+        }
+        if (message.type === "chat") {
+          const chatMsg: ChatMessage = {
+            id: Math.random().toString(36).substr(2, 9),
+            senderId: message.senderId,
+            receiverId: message.receiverId,
+            text: message.text,
+            timestamp: new Date().toISOString()
+          };
+          chatMessages.push(chatMsg);
+          saveDB();
+          const receiverWs = clients.get(message.receiverId);
+          if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
+            receiverWs.send(JSON.stringify({ type: "chat", message: chatMsg }));
+          }
+          ws.send(JSON.stringify({ type: "chat", message: chatMsg }));
+        }
+      });
+      ws.on("close", () => {
+        if (userId) clients.delete(userId);
+      });
+    });
+
+    // Initialize Vite
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },

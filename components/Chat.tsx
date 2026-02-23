@@ -22,31 +22,56 @@ const Chat: React.FC<ChatProps> = ({ currentUser, otherUser }) => {
   };
 
   const setupWebSocket = () => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    ws.current = new WebSocket(`${protocol}//${window.location.host}`);
-    
-    ws.current.onopen = () => {
-      ws.current?.send(JSON.stringify({ type: 'auth', userId: currentUser.id }));
-    };
+    // WebSockets don't work on Netlify and are noisy in AI Studio
+    // We'll try to connect but fail gracefully
+    try {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const socket = new WebSocket(`${protocol}//${window.location.host}`);
+      ws.current = socket;
+      
+      socket.onopen = () => {
+        socket.send(JSON.stringify({ type: 'auth', userId: currentUser.id }));
+      };
 
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'chat') {
-        const msg = data.message;
-        if (
-          (msg.senderId === currentUser.id && msg.receiverId === otherUser.id) ||
-          (msg.senderId === otherUser.id && msg.receiverId === currentUser.id)
-        ) {
-          setMessages(prev => [...prev, msg]);
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'chat') {
+            const msg = data.message;
+            if (
+              (msg.senderId === currentUser.id && msg.receiverId === otherUser.id) ||
+              (msg.senderId === otherUser.id && msg.receiverId === currentUser.id)
+            ) {
+              setMessages(prev => {
+                if (prev.find(m => m.id === msg.id)) return prev;
+                return [...prev, msg];
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Error parsing WS message", e);
         }
-      }
-    };
+      };
+
+      socket.onerror = () => {
+        console.warn("WebSocket connection failed. Falling back to polling.");
+      };
+    } catch (e) {
+      console.warn("WebSocket setup failed", e);
+    }
   };
 
   useEffect(() => {
     fetchMessages();
     setupWebSocket();
-    return () => ws.current?.close();
+    
+    // Polling fallback every 5 seconds
+    const interval = setInterval(fetchMessages, 5000);
+    
+    return () => {
+      ws.current?.close();
+      clearInterval(interval);
+    };
   }, [otherUser.id]);
 
   useEffect(() => {
@@ -55,15 +80,35 @@ const Chat: React.FC<ChatProps> = ({ currentUser, otherUser }) => {
     }
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    ws.current?.send(JSON.stringify({
-      type: 'chat',
-      senderId: currentUser.id,
-      receiverId: otherUser.id,
-      text: input
-    }));
+    
+    const text = input;
     setInput('');
+
+    try {
+      // Always use REST for sending to ensure reliability (especially on Netlify)
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderId: currentUser.id,
+          receiverId: otherUser.id,
+          text
+        })
+      });
+      
+      if (res.ok) {
+        const newMsg = await res.json();
+        setMessages(prev => {
+          if (prev.find(m => m.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
+        });
+      }
+    } catch (err) {
+      console.error("Failed to send message", err);
+      setInput(text); // Restore input on failure
+    }
   };
 
   return (
