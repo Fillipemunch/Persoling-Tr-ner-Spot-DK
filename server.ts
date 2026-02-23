@@ -16,7 +16,7 @@ app.use(bodyParser.json({ limit: '10mb' }));
 
 // Supabase Configuration
 const supabaseUrl = process.env.SUPABASE_URL || 'https://jjcqbyptpqwiznburozt.supabase.co';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- DATABASE PERSISTENCE NOTE ---
