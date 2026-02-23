@@ -17,7 +17,20 @@ app.use(bodyParser.json({ limit: '10mb' }));
 // Supabase Configuration
 const supabaseUrl = process.env.SUPABASE_URL || 'https://jjcqbyptpqwiznburozt.supabase.co';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+if (!supabaseKey) {
+  console.error("CRITICAL: Supabase Key is missing. Authentication will fail.");
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
+
+// Helper to check if we are using the service role key
+const isServiceRole = supabaseKey.includes('service_role') || (process.env.SUPABASE_SERVICE_ROLE_KEY && supabaseKey === process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 // --- DATABASE PERSISTENCE NOTE ---
 // We are now using Supabase for persistence.
@@ -105,20 +118,40 @@ if (process.env.NODE_ENV !== "production" && !process.env.NETLIFY) {
 // Auth Routes
 app.post("/api/auth/register", async (req, res) => {
   const { email, name, role, password } = req.body;
-  console.log(`Registration attempt: ${email}, role: ${role}`);
+  console.log(`Registration attempt: ${email}, role: ${role} (Admin Mode: ${isServiceRole})`);
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
+  let authResponse;
+  
+  if (isServiceRole) {
+    // Use Admin API to create and confirm user immediately
+    authResponse = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
         name,
         role,
         imageUrl: `https://picsum.photos/seed/${email}/200`,
         trainerStatus: 'none'
       }
-    }
-  });
+    });
+  } else {
+    // Normal sign up (might require email confirmation depending on Supabase settings)
+    authResponse = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          role,
+          imageUrl: `https://picsum.photos/seed/${email}/200`,
+          trainerStatus: 'none'
+        }
+      }
+    });
+  }
+
+  const { data, error } = authResponse;
 
   if (error) {
     console.error("Supabase registration error:", error.message);
@@ -152,8 +185,13 @@ app.post("/api/auth/login", async (req, res) => {
   });
 
   if (error) {
-    console.log(`Login failed: ${error.message}`);
-    return res.status(401).json({ message: error.message });
+    console.log(`Login failed for ${email}: ${error.message} (Status: ${error.status})`);
+    return res.status(error.status || 401).json({ message: error.message });
+  }
+
+  if (!data.user) {
+    console.log(`Login failed for ${email}: No user data returned`);
+    return res.status(401).json({ message: "Invalid login credentials" });
   }
 
   const user: User = {
