@@ -6,6 +6,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { createServer } from "http";
 import fs from "fs";
 import path from "path";
+import serverless from "serverless-http";
 import { User, ClientProfile, TrainingPlan, DietPlan, ChatMessage, HireRequest } from "./types";
 
 const app = express();
@@ -16,37 +17,53 @@ const DB_FILE = path.join(process.cwd(), 'db.json');
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
+// --- DATABASE PERSISTENCE NOTE ---
+// On Netlify, the filesystem is read-only and ephemeral. 
+// db.json will NOT persist data between sessions or deploys.
+// TO FIX: Connect to a real database (MongoDB, PostgreSQL, etc.) 
+// using the DATABASE_URL environment variable.
+// ---------------------------------
+
+// Mock Database (Fallback)
+let db = {
+  users: [
+    {
+      id: 'admin-001',
+      email: 'fillipeferreiramunch@gmail.com',
+      name: 'Fillipe Ferreira (Admin)',
+      role: 'admin',
+      password: 'admin',
+      imageUrl: 'https://picsum.photos/seed/admin/200',
+      trainerStatus: 'accepted'
+    }
+  ],
+  clientProfiles: [],
+  trainingPlans: [],
+  dietPlans: [],
+  chatMessages: [],
+  hireRequests: [],
+  activities: []
+};
+
 // Persistence Helpers
 function loadDB() {
+  if (process.env.DATABASE_URL) {
+    console.log("DATABASE_URL detected. In a real app, you would connect to your DB here.");
+    // Example: const client = new MongoClient(process.env.DATABASE_URL);
+    // return await client.db().collection('state').findOne({});
+  }
+  
   if (fs.existsSync(DB_FILE)) {
     try {
-      const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
-      return data;
+      return JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
     } catch (e) {
       console.error("Error loading DB:", e);
     }
   }
-  return {
-    users: [
-      {
-        id: 'admin-001',
-        email: 'fillipeferreiramunch@gmail.com',
-        name: 'Fillipe Ferreira (Admin)',
-        role: 'admin',
-        password: 'admin', // Default password for your first login
-        imageUrl: 'https://picsum.photos/seed/admin/200',
-        trainerStatus: 'accepted'
-      }
-    ],
-    clientProfiles: [],
-    trainingPlans: [],
-    dietPlans: [],
-    chatMessages: [],
-    hireRequests: []
-  };
+  return db;
 }
 
-const db = loadDB();
+db = loadDB();
 const users: User[] = db.users;
 const clientProfiles: ClientProfile[] = db.clientProfiles;
 const trainingPlans: TrainingPlan[] = db.trainingPlans;
@@ -56,16 +73,24 @@ const hireRequests: HireRequest[] = db.hireRequests;
 const activities: { id: string; type: string; description: string; timestamp: string }[] = db.activities || [];
 
 function saveDB() {
+  if (process.env.DATABASE_URL) {
+    // In a real app: await db.collection('state').updateOne({}, { $set: { ... } }, { upsert: true });
+    console.log("Saving to external database (simulated)...");
+  }
+
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify({
-      users,
-      clientProfiles,
-      trainingPlans,
-      dietPlans,
-      chatMessages,
-      hireRequests,
-      activities
-    }, null, 2));
+    // Only write to file if NOT in a serverless environment
+    if (!process.env.NETLIFY && process.env.NODE_ENV !== "production") {
+      fs.writeFileSync(DB_FILE, JSON.stringify({
+        users,
+        clientProfiles,
+        trainingPlans,
+        dietPlans,
+        chatMessages,
+        hireRequests,
+        activities
+      }, null, 2));
+    }
   } catch (e) {
     console.error("Error saving DB:", e);
   }
@@ -376,4 +401,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (process.env.NODE_ENV !== "production" || !process.env.NETLIFY) {
+  startServer();
+}
+
+export const handler = serverless(app);
