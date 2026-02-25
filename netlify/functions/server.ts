@@ -22,13 +22,16 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 // Helper to check if we are using the service role key
-const isServiceRole = supabaseKey.includes('service_role') || (process.env.SUPABASE_SERVICE_ROLE_KEY && supabaseKey === process.env.SUPABASE_SERVICE_ROLE_KEY);
+const isServiceRole = (supabaseKey || '').includes('service_role') || (process.env.SUPABASE_SERVICE_ROLE_KEY && supabaseKey === process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 // Auth Routes
 app.post("/api/register", async (req, res) => {
   const { email, name, role, password } = req.body;
   
   console.log("--- NETLIFY REGISTRATION START ---");
+  console.log("Supabase URL present:", !!supabaseUrl);
+  console.log("Supabase Key present:", !!supabaseKey);
+  console.log("Is Service Role:", isServiceRole);
   
   if (!supabaseUrl || !supabaseKey) {
     return res.status(500).json({ message: "Supabase configuration missing" });

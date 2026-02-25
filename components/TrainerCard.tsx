@@ -11,7 +11,12 @@ interface TrainerCardProps {
 const TrainerCard: React.FC<TrainerCardProps> = ({ trainer }) => {
   const { t } = useLanguage();
   const savedUser = localStorage.getItem('user');
-  const savedUserObj = savedUser ? JSON.parse(savedUser) : null;
+  let savedUserObj = null;
+  try {
+    savedUserObj = savedUser ? JSON.parse(savedUser) : null;
+  } catch (e) {
+    console.error('Failed to parse user in TrainerCard', e);
+  }
 
   return (
     <div className="bg-slate-900/50 rounded-2xl overflow-hidden border border-white/5 hover:border-neon-cyan/50 transition-all duration-300 group backdrop-blur-sm">

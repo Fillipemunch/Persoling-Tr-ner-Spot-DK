@@ -15,6 +15,10 @@ const DB_FILE = path.join(process.cwd(), "db.json");
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", isServiceRole });
+});
+
 // Supabase Configuration
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;

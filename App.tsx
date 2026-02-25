@@ -40,20 +40,25 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
     const trainersList = Array.isArray(trainers) ? trainers : [];
     const allTrainers = trainersList.map(t => ({
       ...t,
+      name: t.name || 'Unknown Trainer',
       rating: 5.0,
       reviewCount: 0,
       certified: true,
-      specialty: t.specialties || [],
+      specialty: Array.isArray(t.specialties) ? t.specialties : [],
       location: 'Remote'
     }));
 
     return allTrainers.filter(trainer => {
       const searchLower = filters.search.toLowerCase();
-      const matchesSearch = trainer.name.toLowerCase().includes(searchLower) || 
-                           trainer.bio?.toLowerCase().includes(searchLower) ||
-                           trainer.specialty.some(s => s.toLowerCase().includes(searchLower));
+      const name = String(trainer.name || '').toLowerCase();
+      const bio = String(trainer.bio || '').toLowerCase();
+      const specialties = Array.isArray(trainer.specialty) ? trainer.specialty : [];
       
-      const matchesSpecialty = filters.specialty === '' || trainer.specialty.includes(filters.specialty);
+      const matchesSearch = name.includes(searchLower) || 
+                           bio.includes(searchLower) ||
+                           specialties.some(s => String(s).toLowerCase().includes(searchLower));
+      
+      const matchesSpecialty = filters.specialty === '' || specialties.includes(filters.specialty);
       const matchesLocation = filters.location === '' || trainer.location === filters.location;
       return matchesSearch && matchesSpecialty && matchesLocation;
     });
@@ -180,9 +185,14 @@ const AppContent: React.FC = () => {
   });
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    try {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch (e) {
+      console.error('Failed to parse user from localStorage', e);
+      localStorage.removeItem('user');
     }
   }, []);
 

@@ -16,6 +16,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [role, setRole] = useState<UserRole>('client');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  
+  if (!t) return <div className="text-white p-10">Loading translations...</div>;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +44,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           navigate('/dashboard');
         }
       } else {
-        const data = await response.json();
-        alert(data.message || 'Authentication failed');
+        let errorMessage = 'Authentication failed';
+        try {
+          const data = await response.json();
+          errorMessage = data.message || data.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Server error (${response.status}): ${response.statusText || 'Unknown Error'}`;
+        }
+        alert(`Error: ${errorMessage}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auth error:', error);
-      alert('An error occurred');
+      alert(`Network/Connection error: ${error.message || 'Please check your internet connection'}`);
     } finally {
       setLoading(false);
     }
