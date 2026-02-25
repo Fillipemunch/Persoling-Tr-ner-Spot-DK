@@ -14,12 +14,30 @@ app.use(bodyParser.json({ limit: '10mb' }));
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
 
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+let supabase: any;
+try {
+  supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+  console.log("Netlify: Supabase client initialized successfully");
+} catch (e: any) {
+  console.error("Netlify CRITICAL: Failed to initialize Supabase client:", e.message);
+  // Create a mock supabase client to prevent crashes if it's used
+  supabase = {
+    auth: {
+      admin: { createUser: async () => ({ data: {}, error: { message: 'Supabase not initialized' } }) },
+      signUp: async () => ({ data: {}, error: { message: 'Supabase not initialized' } }),
+      signInWithPassword: async () => ({ data: {}, error: { message: 'Supabase not initialized' } })
+    },
+    from: () => ({
+      select: () => ({ eq: () => ({ single: async () => ({ data: null, error: { message: 'Supabase not initialized' } }) }) }),
+      insert: async () => ({ error: { message: 'Supabase not initialized' } })
+    })
+  };
+}
 
 // Helper to check if we are using the service role key
 const isServiceRole = (supabaseKey || '').includes('service_role') || (process.env.SUPABASE_SERVICE_ROLE_KEY && supabaseKey === process.env.SUPABASE_SERVICE_ROLE_KEY);

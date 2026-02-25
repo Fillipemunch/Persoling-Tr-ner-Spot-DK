@@ -122,6 +122,10 @@ export const translations = {
       privacy: 'Privacy Policy',
       rights: 'All rights reserved.',
     },
+    ai: {
+      typeMessage: 'Type a message...',
+      send: 'Send',
+    },
   },
   da: {
     nav: {
@@ -242,6 +246,10 @@ export const translations = {
       tos: 'Servicevilkår',
       privacy: 'Privatlivspolitik',
       rights: 'Alle rettigheder forbeholdes.',
+    },
+    ai: {
+      typeMessage: 'Skriv en besked...',
+      send: 'Send',
     },
   }
 };

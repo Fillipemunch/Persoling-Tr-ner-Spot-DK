@@ -83,9 +83,15 @@ const Marketplace: React.FC<{ filters: FilterOptions; setFilters: React.Dispatch
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
           <h1 className="text-5xl md:text-7xl font-black font-heading mb-6 leading-tight">
-            {t.hero.title.split(t.hero.perfectMatch)[0]}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan to-neon-green neon-text-cyan">{t.hero.perfectMatch}</span>
-            {t.hero.title.split(t.hero.perfectMatch)[1]}
+            {t.hero.title.includes(t.hero.perfectMatch) ? (
+              <>
+                {t.hero.title.split(t.hero.perfectMatch)[0]}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan to-neon-green neon-text-cyan">{t.hero.perfectMatch}</span>
+                {t.hero.title.split(t.hero.perfectMatch)[1]}
+              </>
+            ) : (
+              t.hero.title
+            )}
           </h1>
           <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
             {t.hero.subtitle}

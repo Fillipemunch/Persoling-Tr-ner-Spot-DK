@@ -3,11 +3,11 @@
   publish = "dist"
 
 [functions]
-  external_node_modules = ["lightningcss"]
+  node_bundle = true
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/server/:splat"
+  to = "/.netlify/functions/server"
   status = 200
 
 [[redirects]]
