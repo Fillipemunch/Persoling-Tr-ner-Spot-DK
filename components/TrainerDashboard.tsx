@@ -51,21 +51,33 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
   };
 
   const fetchClientProfile = async (clientId: string) => {
-    const res = await fetch(`/api/clients/profile/${clientId}`);
-    const data = await res.json();
-    setClientProfile(data);
+    try {
+      const res = await fetch(`/api/clients/profile/${clientId}`);
+      if (!res.ok) throw new Error('Failed to fetch client profile');
+      const data = await res.json();
+      setClientProfile(data);
+    } catch (err) {
+      console.error('Error fetching client profile:', err);
+    }
   };
 
   const handleRespondRequest = async (requestId: string, status: 'accepted' | 'rejected') => {
-    const res = await fetch('/api/trainers/respond-request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requestId, status }),
-    });
-    if (res.ok) {
-      alert(`Request ${status}`);
-      fetchRequests();
-      fetchClients();
+    try {
+      const res = await fetch('/api/trainers/respond-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, status }),
+      });
+      if (res.ok) {
+        alert(`Request ${status}`);
+        fetchRequests();
+        fetchClients();
+      } else {
+        throw new Error('Failed to respond to request');
+      }
+    } catch (err) {
+      console.error('Error responding to request:', err);
+      alert('Failed to respond to request. Please try again.');
     }
   };
 
@@ -87,73 +99,101 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result as string;
-      const res = await fetch('/api/users/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, imageUrl: base64String }),
-      });
-      if (res.ok) {
-        const updatedUser = await res.json();
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+      try {
+        const res = await fetch('/api/users/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, imageUrl: base64String }),
+        });
+        if (res.ok) {
+          const updatedUser = await res.json();
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        } else {
+          throw new Error('Failed to upload image');
+        }
+      } catch (err) {
+        console.error('Error uploading image:', err);
+        alert('Failed to upload image. Please try again.');
       }
     };
     reader.readAsDataURL(file);
   };
 
   const handleUpdateProfile = async () => {
-    const res = await fetch('/api/users/profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: user.id,
-        bio: trainerBio,
-        specialties: trainerSpecialties.split(',').map(s => s.trim()),
-        certifications: trainerCerts.split(',').map(s => s.trim())
-      }),
-    });
-    if (res.ok) {
-      const updatedUser = await res.json();
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      alert('Profile updated!');
-      setShowPlanForm(null);
+    try {
+      const res = await fetch('/api/users/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          bio: trainerBio,
+          specialties: trainerSpecialties.split(',').map(s => s.trim()),
+          certifications: trainerCerts.split(',').map(s => s.trim())
+        }),
+      });
+      if (res.ok) {
+        const updatedUser = await res.json();
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        alert('Profile updated!');
+        setShowPlanForm(null);
+      } else {
+        throw new Error('Failed to update profile');
+      }
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      alert('Failed to update profile. Please try again.');
     }
   };
 
   const handleAddTrainingPlan = async () => {
     if (!selectedClient) return;
-    const res = await fetch('/api/plans/training', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        clientId: selectedClient.id,
-        trainerId: user.id,
-        exercises
-      }),
-    });
-    if (res.ok) {
-      alert('Training plan created!');
-      setShowPlanForm(null);
-      setExercises([{ name: '', sets: 3, reps: '12', notes: '', link: '', imageUrl: '' }]);
+    try {
+      const res = await fetch('/api/plans/training', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: selectedClient.id,
+          trainerId: user.id,
+          exercises
+        }),
+      });
+      if (res.ok) {
+        alert('Training plan created!');
+        setShowPlanForm(null);
+        setExercises([{ name: '', sets: 3, reps: '12', notes: '', link: '', imageUrl: '' }]);
+      } else {
+        throw new Error('Failed to create training plan');
+      }
+    } catch (err) {
+      console.error('Error creating training plan:', err);
+      alert('Failed to create training plan. Please try again.');
     }
   };
 
   const handleAddDietPlan = async () => {
     if (!selectedClient) return;
-    const res = await fetch('/api/plans/diet', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        clientId: selectedClient.id,
-        trainerId: user.id,
-        meals
-      }),
-    });
-    if (res.ok) {
-      alert('Diet plan created!');
-      setShowPlanForm(null);
-      setMeals([{ time: '08:00', description: '', calories: 500, link: '', imageUrl: '' }]);
+    try {
+      const res = await fetch('/api/plans/diet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: selectedClient.id,
+          trainerId: user.id,
+          meals
+        }),
+      });
+      if (res.ok) {
+        alert('Diet plan created!');
+        setShowPlanForm(null);
+        setMeals([{ time: '08:00', description: '', calories: 500, link: '', imageUrl: '' }]);
+      } else {
+        throw new Error('Failed to create diet plan');
+      }
+    } catch (err) {
+      console.error('Error creating diet plan:', err);
+      alert('Failed to create diet plan. Please try again.');
     }
   };
 

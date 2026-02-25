@@ -69,7 +69,17 @@ const Chat: React.FC<ChatProps> = ({ currentUser, otherUser }) => {
     const interval = setInterval(fetchMessages, 5000);
     
     return () => {
-      ws.current?.close();
+      if (ws.current) {
+        // Only close if it's not already closed
+        if (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING) {
+          try {
+            ws.current.close();
+          } catch (e) {
+            // Ignore errors during close
+          }
+        }
+        ws.current = null;
+      }
       clearInterval(interval);
     };
   }, [otherUser.id]);

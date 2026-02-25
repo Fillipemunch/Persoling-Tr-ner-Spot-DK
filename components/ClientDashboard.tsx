@@ -26,11 +26,16 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
   });
 
   const fetchProfile = async () => {
-    const res = await fetch(`/api/clients/profile/${user.id}`);
-    const data = await res.json();
-    if (data) {
-      setProfile(data);
-      setFormData(data);
+    try {
+      const res = await fetch(`/api/clients/profile/${user.id}`);
+      if (!res.ok) throw new Error('Failed to fetch profile');
+      const data = await res.json();
+      if (data) {
+        setProfile(data);
+        setFormData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
     }
   };
 
@@ -73,14 +78,21 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/clients/profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
-    });
-    if (res.ok) {
-      setProfile(formData);
-      setIsEditingProfile(false);
+    try {
+      const res = await fetch('/api/clients/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (res.ok) {
+        setProfile(formData);
+        setIsEditingProfile(false);
+      } else {
+        throw new Error('Failed to update profile');
+      }
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      alert('Failed to update profile. Please try again.');
     }
   };
 
@@ -91,15 +103,22 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result as string;
-      const res = await fetch('/api/users/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, imageUrl: base64String }),
-      });
-      if (res.ok) {
-        const updatedUser = await res.json();
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+      try {
+        const res = await fetch('/api/users/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, imageUrl: base64String }),
+        });
+        if (res.ok) {
+          const updatedUser = await res.json();
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        } else {
+          throw new Error('Failed to upload image');
+        }
+      } catch (err) {
+        console.error('Error uploading image:', err);
+        alert('Failed to upload image. Please try again.');
       }
     };
     reader.readAsDataURL(file);
