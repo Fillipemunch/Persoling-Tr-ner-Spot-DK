@@ -15,14 +15,15 @@ app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
 // Supabase Configuration
-const supabaseUrl = process.env.SUPABASE_URL || 'https://jjcqbyptpqwiznburozt.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseKey) {
-  console.error("CRITICAL: Supabase Key is missing. Authentication will fail.");
+if (!supabaseUrl || !supabaseKey) {
+  console.error("CRITICAL: Supabase URL or Key is missing. Authentication will fail.");
+  console.log("Required variables: SUPABASE_URL, SUPABASE_ANON_KEY, and optionally SUPABASE_SERVICE_ROLE_KEY");
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey, {
+const supabase = createClient(supabaseUrl || '', supabaseKey || '', {
   auth: {
     autoRefreshToken: false,
     persistSession: false
