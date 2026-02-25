@@ -21,7 +21,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     e.preventDefault();
     setLoading(true);
 
-    const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
+    const endpoint = isRegistering ? '/api/register' : '/api/login';
     const body = isRegistering ? { email, name, role, password } : { email, password };
 
     try {
