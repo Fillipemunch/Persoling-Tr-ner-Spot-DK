@@ -159,8 +159,33 @@ app.post("/api/auth/register", async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 
+  const userId = data.user?.id;
+  if (!userId) {
+    return res.status(500).json({ message: "User ID not generated" });
+  }
+
+  // Insert into profiles table using the service role client
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .insert([
+      {
+        id: userId,
+        email: email,
+        name: name,
+        role: role,
+        image_url: `https://picsum.photos/seed/${email}/200`,
+        trainer_status: 'none'
+      }
+    ]);
+
+  if (profileError) {
+    console.error("Error creating profile in 'profiles' table:", profileError.message);
+    // We don't necessarily want to fail registration if profile insert fails, 
+    // but it's better to know.
+  }
+
   const newUser: User = {
-    id: data.user?.id || '',
+    id: userId,
     email: data.user?.email || email,
     name,
     role,
@@ -195,14 +220,25 @@ app.post("/api/auth/login", async (req, res) => {
     return res.status(401).json({ message: "Invalid login credentials" });
   }
 
+  // Fetch profile from profiles table
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', data.user.id)
+    .single();
+
+  if (profileError) {
+    console.warn("Could not fetch profile from 'profiles' table:", profileError.message);
+  }
+
   const user: User = {
-    id: data.user?.id || '',
-    email: data.user?.email || email,
-    name: data.user?.user_metadata?.name,
-    role: data.user?.user_metadata?.role,
-    imageUrl: data.user?.user_metadata?.imageUrl,
-    trainerStatus: data.user?.user_metadata?.trainerStatus || 'none',
-    trainerId: data.user?.user_metadata?.trainerId
+    id: data.user.id,
+    email: data.user.email || email,
+    name: profile?.name || data.user.user_metadata?.name,
+    role: profile?.role || data.user.user_metadata?.role,
+    imageUrl: profile?.image_url || data.user.user_metadata?.imageUrl,
+    trainerStatus: profile?.trainer_status || data.user.user_metadata?.trainerStatus || 'none',
+    trainerId: profile?.trainer_id || data.user.user_metadata?.trainerId
   };
 
   console.log(`Login successful: ${email}`);
