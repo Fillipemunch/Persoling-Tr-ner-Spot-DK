@@ -568,6 +568,18 @@ async function startServer() {
       });
     });
 
+    // Initialize Vite for local development
+    try {
+      const { createServer: createViteServer } = await import("vite");
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+      console.log("Vite middleware initialized");
+    } catch (e) {
+      console.log("Vite not found or failed to load, skipping Vite middleware");
+    }
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
