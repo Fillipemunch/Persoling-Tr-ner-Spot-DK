@@ -534,39 +534,43 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== "production" && !process.env.NETLIFY) {
     // Initialize WebSockets
-    const { WebSocketServer, WebSocket } = await import("ws");
-    const wss = new WebSocketServer({ server: httpServer });
-    const clients = new Map<string, any>();
+    try {
+      const { WebSocketServer, WebSocket } = await import("ws");
+      const wss = new WebSocketServer({ server: httpServer });
+      const clients = new Map<string, any>();
 
-    wss.on("connection", (ws, req) => {
-      let userId: string | null = null;
-      ws.on("message", (data) => {
-        const message = JSON.parse(data.toString());
-        if (message.type === "auth") {
-          userId = message.userId;
-          if (userId) clients.set(userId, ws);
-        }
-        if (message.type === "chat") {
-          const chatMsg: ChatMessage = {
-            id: Math.random().toString(36).substr(2, 9),
-            senderId: message.senderId,
-            receiverId: message.receiverId,
-            text: message.text,
-            timestamp: new Date().toISOString()
-          };
-          chatMessages.push(chatMsg);
-          saveDB();
-          const receiverWs = clients.get(message.receiverId);
-          if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
-            receiverWs.send(JSON.stringify({ type: "chat", message: chatMsg }));
+      wss.on("connection", (ws, req) => {
+        let userId: string | null = null;
+        ws.on("message", (data) => {
+          const message = JSON.parse(data.toString());
+          if (message.type === "auth") {
+            userId = message.userId;
+            if (userId) clients.set(userId, ws);
           }
-          ws.send(JSON.stringify({ type: "chat", message: chatMsg }));
-        }
+          if (message.type === "chat") {
+            const chatMsg: ChatMessage = {
+              id: Math.random().toString(36).substr(2, 9),
+              senderId: message.senderId,
+              receiverId: message.receiverId,
+              text: message.text,
+              timestamp: new Date().toISOString()
+            };
+            chatMessages.push(chatMsg);
+            saveDB();
+            const receiverWs = clients.get(message.receiverId);
+            if (receiverWs && receiverWs.readyState === 1) { // 1 is OPEN
+              receiverWs.send(JSON.stringify({ type: "chat", message: chatMsg }));
+            }
+            ws.send(JSON.stringify({ type: "chat", message: chatMsg }));
+          }
+        });
+        ws.on("close", () => {
+          if (userId) clients.delete(userId);
+        });
       });
-      ws.on("close", () => {
-        if (userId) clients.delete(userId);
-      });
-    });
+    } catch (e) {
+      console.log("WebSocket support not available");
+    }
 
     // Initialize Vite for local development
     try {

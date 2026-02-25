@@ -23,6 +23,7 @@
     "react-router-dom": "^7.13.0",
     "serverless-http": "^4.0.0",
     "tailwindcss": "^4.2.0",
+    "toml": "^3.0.0",
     "ws": "^8.19.0"
   },
   "devDependencies": {

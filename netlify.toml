@@ -2,14 +2,6 @@
   command = "npm run build"
   publish = "dist"
 
-[build.environment]
-  NODE_VERSION = "18"
-
-[functions]
-  directory = "netlify/functions"
-  node_bundle = true
-  external_node_modules = ["vite", "lightningcss", "esbuild", "ws"]
-
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/server"
