@@ -26,6 +26,7 @@ export interface User {
   bio?: string;
   specialties?: string[];
   certifications?: string[];
+  lastSeen?: string;
 }
 
 export interface HireRequest {

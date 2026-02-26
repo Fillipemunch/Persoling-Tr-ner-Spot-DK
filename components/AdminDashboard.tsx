@@ -140,49 +140,40 @@ const AdminDashboard: React.FC = () => {
               <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Users</span>
             </div>
             <div className="text-3xl font-black mb-1">{stats.totalUsers}</div>
-            <div className="flex gap-2 text-[8px] font-black uppercase tracking-widest">
-              <span className="text-neon-cyan">{stats.totalTrainers} Trainers</span>
-              <span className="text-neon-pink">{stats.totalClients} Clients</span>
-            </div>
+            <div className="text-[8px] font-black uppercase tracking-widest text-slate-500">Platform reach</div>
           </div>
 
           <div className="bg-slate-900/50 p-6 rounded-3xl border border-white/5 backdrop-blur-xl group hover:border-neon-cyan/30 transition-all">
             <div className="flex justify-between items-start mb-4">
               <div className="p-2 bg-neon-cyan/10 rounded-lg">
-                <BarChart3 className="text-neon-cyan" size={20} />
+                <Briefcase className="text-neon-cyan" size={20} />
               </div>
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Engagement</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Trainers</span>
             </div>
-            <div className="text-3xl font-black mb-1">{stats.totalRequests}</div>
-            <div className="flex gap-2 text-[8px] font-black uppercase tracking-widest">
-              <span className="text-neon-green">{stats.acceptedRequests} Accepted</span>
-              <span className="text-yellow-500">{stats.pendingRequests} Pending</span>
-            </div>
+            <div className="text-3xl font-black mb-1">{stats.totalTrainers}</div>
+            <div className="text-[8px] font-black uppercase tracking-widest text-neon-cyan">Active professionals</div>
           </div>
 
-          <div className="bg-slate-900/50 p-6 rounded-3xl border border-white/5 backdrop-blur-xl group hover:border-neon-green/30 transition-all">
+          <div className="bg-slate-900/50 p-6 rounded-3xl border border-white/5 backdrop-blur-xl group hover:border-neon-pink/30 transition-all">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-neon-green/10 rounded-lg">
-                <Dumbbell className="text-neon-green" size={20} />
+              <div className="p-2 bg-neon-pink/10 rounded-lg">
+                <Users className="text-neon-pink" size={20} />
               </div>
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Programs</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Clients</span>
             </div>
-            <div className="text-3xl font-black mb-1">{stats.totalPlans}</div>
-            <div className="flex gap-2 text-[8px] font-black uppercase tracking-widest">
-              <span className="text-neon-cyan">{stats.totalTrainingPlans} Training</span>
-              <span className="text-neon-pink">{stats.totalDietPlans} Diet</span>
-            </div>
+            <div className="text-3xl font-black mb-1">{stats.totalClients}</div>
+            <div className="text-[8px] font-black uppercase tracking-widest text-neon-pink">Active students</div>
           </div>
 
-          <div className="bg-slate-900/50 p-6 rounded-3xl border border-white/5 backdrop-blur-xl group hover:border-white/10 transition-all">
+          <div className="bg-slate-900/50 p-6 rounded-3xl border border-white/5 backdrop-blur-xl group hover:border-yellow-500/30 transition-all">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-white/5 rounded-lg">
-                <MessageSquare className="text-white" size={20} />
+              <div className="p-2 bg-yellow-500/10 rounded-lg">
+                <Clock className="text-yellow-500" size={20} />
               </div>
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Messages</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pending Approval</span>
             </div>
-            <div className="text-3xl font-black mb-1">{stats.totalMessages}</div>
-            <div className="text-[8px] font-black uppercase tracking-widest text-slate-500">Total chat interactions</div>
+            <div className="text-3xl font-black mb-1">{stats.pendingRequests}</div>
+            <div className="text-[8px] font-black uppercase tracking-widest text-yellow-500">Awaiting trainer response</div>
           </div>
         </div>
       )}
@@ -242,18 +233,20 @@ const AdminDashboard: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-8 py-4">
-                      {user.role === 'trainer' ? (
-                        <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-slate-400">
-                          {user.trainerStatus === 'accepted' ? (
-                            <CheckCircle size={10} className="text-neon-green" />
-                          ) : (
-                            <XCircle size={10} className="text-neon-pink" />
-                          )}
-                          {user.trainerStatus || 'N/A'}
-                        </div>
-                      ) : (
-                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-600">Active</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const lastSeen = user.lastSeen ? new Date(user.lastSeen).getTime() : 0;
+                          const isOnline = Date.now() - lastSeen < 300000; // Online if active in last 5 mins
+                          return (
+                            <>
+                              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-neon-green shadow-neon-green' : 'bg-slate-600'}`}></div>
+                              <span className={`text-[8px] font-black uppercase tracking-widest ${isOnline ? 'text-neon-green' : 'text-slate-500'}`}>
+                                {isOnline ? 'Online' : 'Offline'}
+                              </span>
+                            </>
+                          );
+                        })()}
+                      </div>
                     </td>
                     <td className="px-8 py-4 text-right">
                       {user.role !== 'admin' && (

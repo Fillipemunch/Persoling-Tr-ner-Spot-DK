@@ -503,20 +503,45 @@ app.post("/api/chat", (req, res) => {
 });
 
 // Admin Routes
-app.get("/api/admin/stats", (req, res) => {
+app.get("/api/admin/stats", async (req, res) => {
   try {
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Supabase not configured");
+    }
+
+    const [
+      { count: totalUsers },
+      { count: totalTrainers },
+      { count: totalClients },
+      { count: pendingRequests },
+      { count: acceptedRequests },
+      { data: recentProfiles }
+    ] = await Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'trainer'),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'client'),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('trainer_status', 'pending'),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('trainer_status', 'accepted'),
+      supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(5)
+    ]);
+
     const stats = {
-      totalUsers: Array.isArray(users) ? users.length : 0,
-      totalTrainers: Array.isArray(users) ? users.filter(u => u.role === 'trainer').length : 0,
-      totalClients: Array.isArray(users) ? users.filter(u => u.role === 'client').length : 0,
-      totalPlans: (Array.isArray(trainingPlans) ? trainingPlans.length : 0) + (Array.isArray(dietPlans) ? dietPlans.length : 0),
-      totalTrainingPlans: Array.isArray(trainingPlans) ? trainingPlans.length : 0,
-      totalDietPlans: Array.isArray(dietPlans) ? dietPlans.length : 0,
-      totalRequests: Array.isArray(hireRequests) ? hireRequests.length : 0,
-      pendingRequests: Array.isArray(hireRequests) ? hireRequests.filter(r => r.status === 'pending').length : 0,
-      acceptedRequests: Array.isArray(hireRequests) ? hireRequests.filter(r => r.status === 'accepted').length : 0,
-      totalMessages: Array.isArray(chatMessages) ? chatMessages.length : 0,
-      recentActivities: Array.isArray(activities) ? activities.slice(0, 10) : [],
+      totalUsers: totalUsers || 0,
+      totalTrainers: totalTrainers || 0,
+      totalClients: totalClients || 0,
+      totalPlans: 0, // We could count these too if needed
+      totalTrainingPlans: 0,
+      totalDietPlans: 0,
+      totalRequests: (pendingRequests || 0) + (acceptedRequests || 0),
+      pendingRequests: pendingRequests || 0,
+      acceptedRequests: acceptedRequests || 0,
+      totalMessages: 0,
+      recentActivities: (recentProfiles || []).map((p: any) => ({
+        id: p.id,
+        type: 'USER_REGISTER',
+        description: `Novo usuário ${p.name} registrado como ${p.role}`,
+        timestamp: p.created_at || new Date().toISOString()
+      })),
       system: {
         nodeVersion: process.version,
         platform: process.platform,
@@ -525,18 +550,35 @@ app.get("/api/admin/stats", (req, res) => {
       }
     };
     res.json(stats);
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error fetching admin stats:", err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: err.message });
   }
 });
 
-app.get("/api/admin/users", (req, res) => {
+app.get("/api/admin/users", async (req, res) => {
   try {
-    res.json(Array.isArray(users) ? users : []);
-  } catch (err) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('name', { ascending: true });
+    
+    if (error) throw error;
+    
+    const mappedUsers = data.map((p: any) => ({
+      id: p.id,
+      email: p.email,
+      name: p.name,
+      role: p.role,
+      imageUrl: p.image_url,
+      trainerStatus: p.trainer_status,
+      lastSeen: p.updated_at // Using updated_at as a proxy for "online"
+    }));
+    
+    res.json(mappedUsers);
+  } catch (err: any) {
     console.error("Error fetching admin users:", err);
-    res.json([]);
+    res.status(500).json({ message: err.message });
   }
 });
 
