@@ -236,7 +236,7 @@ const AppContent: React.FC = () => {
                   </button>
                 </div>
                 <Link to="/" className="hover:text-neon-cyan transition-colors">{t.nav.findTrainers}</Link>
-                {user ? (
+                {user && user.email ? (
                   <>
                     <Link 
                       to={user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? "/admin" : "/dashboard"} 
@@ -335,7 +335,7 @@ const AppContent: React.FC = () => {
                         <span className="font-black uppercase tracking-widest text-xs">{t.nav.findTrainers}</span>
                       </Link>
                       
-                      {user ? (
+                      {user && user.email ? (
                         <>
                           <Link 
                             to={user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? "/admin" : "/dashboard"} 
@@ -385,7 +385,7 @@ const AppContent: React.FC = () => {
         <Routes>
           <Route path="/" element={<Marketplace filters={filters} setFilters={setFilters} />} />
           <Route path="/login" element={
-            user ? (
+            user && user.email ? (
               user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
                 ? <Navigate to="/admin" /> 
                 : <Navigate to="/dashboard" />
@@ -397,7 +397,7 @@ const AppContent: React.FC = () => {
             ) : <Navigate to="/login" />
           } />
           <Route path="/admin" element={
-            user?.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? <AdminDashboard /> : <Navigate to="/" />
+            user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? <AdminDashboard /> : <Navigate to="/" />
           } />
         </Routes>
 

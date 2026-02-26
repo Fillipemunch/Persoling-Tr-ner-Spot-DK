@@ -38,7 +38,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         localStorage.setItem('user', JSON.stringify(user));
         onLogin(user);
         
-        if (user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com') {
+        if (user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com') {
           navigate('/admin');
         } else {
           navigate('/dashboard');

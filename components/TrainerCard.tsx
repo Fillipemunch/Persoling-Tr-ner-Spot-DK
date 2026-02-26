@@ -78,11 +78,12 @@ const TrainerCard: React.FC<TrainerCardProps> = ({ trainer }) => {
             <button 
               onClick={async () => {
                 const user = savedUserObj;
-                if (user.role !== 'client') {
+                if (!user) return;
+                if (user?.role !== 'client') {
                   alert('Only clients can hire trainers');
                   return;
                 }
-                if (user.trainerStatus !== 'none') {
+                if (user?.trainerStatus !== 'none') {
                   alert('You already have a trainer or a pending request');
                   return;
                 }

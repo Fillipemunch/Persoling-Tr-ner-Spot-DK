@@ -136,7 +136,7 @@ const Chat: React.FC<ChatProps> = ({ currentUser, otherUser }) => {
         <div>
           <div className="font-black text-white uppercase tracking-widest text-xs">{otherUser.name}</div>
           <div className="text-[10px] text-neon-cyan font-black uppercase tracking-widest">
-            {otherUser.role === 'trainer' ? t.auth.trainer : t.auth.client}
+            {otherUser?.role === 'trainer' ? t.auth.trainer : t.auth.client}
           </div>
         </div>
       </div>
