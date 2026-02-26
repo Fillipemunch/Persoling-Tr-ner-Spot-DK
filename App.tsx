@@ -236,15 +236,15 @@ const AppContent: React.FC = () => {
                   </button>
                 </div>
                 <Link to="/" className="hover:text-neon-cyan transition-colors">{t.nav.findTrainers}</Link>
-                {user && user.email ? (
+                {user && user?.email ? (
                   <>
                     <Link 
-                      to={user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? "/admin" : "/dashboard"} 
+                      to={user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? "/admin" : "/dashboard"} 
                       className="hover:text-neon-cyan transition-colors"
                     >
-                      {user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
+                      {user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
                         ? t.nav.admin 
-                        : (user.role === 'trainer' ? t.dashboard.trainerDashboard : t.nav.dashboard)}
+                        : (user?.role === 'trainer' ? t.dashboard.trainerDashboard : t.nav.dashboard)}
                     </Link>
                     <button onClick={handleLogout} className="text-slate-400 hover:text-white transition-colors">{t.nav.logout}</button>
                   </>
@@ -335,18 +335,18 @@ const AppContent: React.FC = () => {
                         <span className="font-black uppercase tracking-widest text-xs">{t.nav.findTrainers}</span>
                       </Link>
                       
-                      {user && user.email ? (
+                      {user && user?.email ? (
                         <>
                           <Link 
-                            to={user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? "/admin" : "/dashboard"} 
+                            to={user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? "/admin" : "/dashboard"} 
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="flex items-center gap-3 p-4 bg-black rounded-2xl border border-white/5 text-slate-300 hover:text-neon-cyan transition-all"
                           >
-                            {user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? <Shield size={18} /> : <LayoutDashboard size={18} />}
+                            {user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? <Shield size={18} /> : <LayoutDashboard size={18} />}
                             <span className="font-black uppercase tracking-widest text-xs">
-                              {user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
+                              {user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
                                 ? t.nav.admin 
-                                : (user.role === 'trainer' ? t.dashboard.trainerDashboard : t.nav.dashboard)}
+                                : (user?.role === 'trainer' ? t.dashboard.trainerDashboard : t.nav.dashboard)}
                             </span>
                           </Link>
                           <button 
@@ -385,8 +385,8 @@ const AppContent: React.FC = () => {
         <Routes>
           <Route path="/" element={<Marketplace filters={filters} setFilters={setFilters} />} />
           <Route path="/login" element={
-            user && user.email ? (
-              user.email.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
+            user && user?.email ? (
+              user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
                 ? <Navigate to="/admin" /> 
                 : <Navigate to="/dashboard" />
             ) : <Login onLogin={setUser} />

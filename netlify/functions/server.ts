@@ -101,6 +101,7 @@ app.post("/api/register", async (req, res) => {
     }
 
     // Insert into profiles table
+    console.log("Attempting to insert into 'profiles' table for user:", userId);
     const { error: profileError } = await supabase
       .from('profiles')
       .insert([
@@ -115,12 +116,13 @@ app.post("/api/register", async (req, res) => {
       ]);
 
     if (profileError) {
-      console.error("Profile Table Error:", profileError.message);
-      // Return 201 because user is created in Auth
+      console.error("Profile Table Error:", profileError.message, profileError.details, profileError.hint);
+      // Return 201 because user is created in Auth, but warn about profile
       return res.status(201).json({ 
-        message: "User created, but profile table failed",
+        message: "User created in Auth, but profile table failed. This usually means the 'profiles' table is missing or has RLS enabled without proper policies.",
         user: { id: userId, email, name, role },
-        error: profileError.message
+        error: profileError.message,
+        details: profileError.details
       });
     }
 

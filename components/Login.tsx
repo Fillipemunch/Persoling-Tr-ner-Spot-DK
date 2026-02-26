@@ -48,6 +48,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         try {
           const data = await response.json();
           errorMessage = data.message || data.error || errorMessage;
+          if (data.details) {
+            errorMessage += ` (${data.details})`;
+          }
         } catch (e) {
           errorMessage = `Server error (${response.status}): ${response.statusText || 'Unknown Error'}`;
         }
