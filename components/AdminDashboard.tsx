@@ -15,7 +15,7 @@ interface AdminStats {
   acceptedRequests: number;
   totalMessages: number;
   recentActivities: { id: string; type: string; description: string; timestamp: string }[];
-  system: {
+  system?: {
     nodeVersion: string;
     platform: string;
     uptime: number;
@@ -132,7 +132,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       {/* System Info */}
-      {stats && (
+      {stats?.system && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="bg-slate-900/30 p-4 rounded-2xl border border-white/5 flex items-center gap-4">
             <div className="p-2 bg-blue-500/10 rounded-lg">
@@ -140,7 +140,9 @@ const AdminDashboard: React.FC = () => {
             </div>
             <div>
               <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Environment</div>
-              <div className="text-xs font-bold text-slate-300">{stats.system.nodeVersion} on {stats.system.platform}</div>
+              <div className="text-xs font-bold text-slate-300">
+                {stats.system?.nodeVersion || 'v20.0.0'} on {stats.system?.platform || 'linux'}
+              </div>
             </div>
           </div>
           <div className="bg-slate-900/30 p-4 rounded-2xl border border-white/5 flex items-center gap-4">
@@ -149,7 +151,9 @@ const AdminDashboard: React.FC = () => {
             </div>
             <div>
               <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Memory Usage</div>
-              <div className="text-xs font-bold text-slate-300">{(stats.system.memoryUsage.rss / 1024 / 1024).toFixed(2)} MB RSS</div>
+              <div className="text-xs font-bold text-slate-300">
+                {stats.system?.memoryUsage ? (stats.system.memoryUsage.rss / 1024 / 1024).toFixed(2) : '0.00'} MB RSS
+              </div>
             </div>
           </div>
           <div className="bg-slate-900/30 p-4 rounded-2xl border border-white/5 flex items-center gap-4">
@@ -158,7 +162,9 @@ const AdminDashboard: React.FC = () => {
             </div>
             <div>
               <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Uptime</div>
-              <div className="text-xs font-bold text-slate-300">{(stats.system.uptime / 3600).toFixed(2)} hours</div>
+              <div className="text-xs font-bold text-slate-300">
+                {stats.system?.uptime ? (stats.system.uptime / 3600).toFixed(2) : '0.00'} hours
+              </div>
             </div>
           </div>
         </div>
