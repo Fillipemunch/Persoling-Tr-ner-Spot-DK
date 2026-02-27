@@ -181,6 +181,108 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+// Profile Routes
+app.post("/api/users/profile", async (req, res) => {
+  const { userId, ...updates } = req.body;
+  
+  const dbUpdates: any = {};
+  if (updates.name) dbUpdates.name = updates.name;
+  if (updates.role) dbUpdates.role = updates.role;
+  if (updates.imageUrl) dbUpdates.image_url = updates.imageUrl;
+  if (updates.bio) dbUpdates.bio = updates.bio;
+  if (updates.specialties) dbUpdates.specialties = updates.specialties;
+  if (updates.certifications) dbUpdates.certifications = updates.certifications;
+  if (updates.trainerId) dbUpdates.trainer_id = updates.trainerId;
+  if (updates.trainerStatus) dbUpdates.trainer_status = updates.trainerStatus;
+  
+  dbUpdates.updated_at = new Date().toISOString();
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(dbUpdates)
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      role: data.role,
+      imageUrl: data.image_url,
+      trainerStatus: data.trainer_status,
+      trainerId: data.trainer_id,
+      bio: data.bio,
+      specialties: data.specialties,
+      certifications: data.certifications
+    });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Client Routes
+app.post("/api/clients/profile", async (req, res) => {
+  const profile = req.body;
+  
+  try {
+    const { data, error } = await supabase
+      .from('client_profiles')
+      .upsert({
+        user_id: profile.userId,
+        weight: profile.weight,
+        height: profile.height,
+        goal: profile.goal,
+        activity_level: profile.activityLevel,
+        medical_conditions: profile.medicalConditions,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      userId: data.user_id,
+      weight: data.weight,
+      height: data.height,
+      goal: data.goal,
+      activityLevel: data.activity_level,
+      medicalConditions: data.medical_conditions
+    });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get("/api/clients/profile/:userId", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('client_profiles')
+      .select('*')
+      .eq('user_id', req.params.userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+
+    if (!data) return res.json(null);
+
+    res.json({
+      userId: data.user_id,
+      weight: data.weight,
+      height: data.height,
+      goal: data.goal,
+      activityLevel: data.activity_level,
+      medicalConditions: data.medical_conditions
+    });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Trainer Routes
 app.get("/api/trainers", async (req, res) => {
   try {
@@ -238,6 +340,102 @@ app.get("/api/plans/:clientId", async (req, res) => {
       .eq('client_id', req.params.clientId);
     
     res.json({ training: training || [], diet: diet || [] });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Admin Routes
+app.get("/api/admin/stats", async (req, res) => {
+  try {
+    const [
+      { count: totalUsers },
+      { count: totalTrainers },
+      { count: totalClients },
+      { count: pendingRequests },
+      { count: acceptedRequests },
+      { data: recentProfiles }
+    ] = await Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'trainer'),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'client'),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('trainer_status', 'pending'),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('trainer_status', 'accepted'),
+      supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(5)
+    ]);
+
+    res.json({
+      totalUsers: totalUsers || 0,
+      totalTrainers: totalTrainers || 0,
+      totalClients: totalClients || 0,
+      pendingRequests: pendingRequests || 0,
+      acceptedRequests: acceptedRequests || 0,
+      recentActivities: (recentProfiles || []).map((p: any) => ({
+        id: p.id,
+        type: 'USER_REGISTER',
+        description: `Novo usuário ${p.name} registrado como ${p.role}`,
+        timestamp: p.created_at || new Date().toISOString()
+      }))
+    });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get("/api/admin/users", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('name', { ascending: true });
+    
+    if (error) throw error;
+    
+    res.json(data.map((p: any) => ({
+      id: p.id,
+      email: p.email,
+      name: p.name,
+      role: p.role,
+      imageUrl: p.image_url,
+      trainerStatus: p.trainer_status,
+      lastSeen: p.updated_at
+    })));
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch("/api/admin/users/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role, trainerStatus } = req.body;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ 
+        role, 
+        trainer_status: trainerStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete("/api/admin/users/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await supabase.from('profiles').delete().eq('id', userId);
+    if (isServiceRole) {
+      await supabase.auth.admin.deleteUser(userId);
+    }
+    res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }

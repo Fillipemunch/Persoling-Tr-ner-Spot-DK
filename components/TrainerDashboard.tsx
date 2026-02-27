@@ -16,6 +16,7 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
   const [selectedClient, setSelectedClient] = useState<User | null>(null);
   const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
   const [showPlanForm, setShowPlanForm] = useState<'training' | 'diet' | 'chat' | 'profile' | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Form states
   const [exercises, setExercises] = useState([{ name: '', sets: 3, reps: '12', notes: '', link: '', imageUrl: '' }]);
@@ -96,6 +97,7 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setIsSaving(true);
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result as string;
@@ -115,18 +117,22 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
       } catch (err) {
         console.error('Error uploading image:', err);
         alert('Failed to upload image. Please try again.');
+      } finally {
+        setIsSaving(false);
       }
     };
     reader.readAsDataURL(file);
   };
 
   const handleUpdateProfile = async () => {
+    setIsSaving(true);
     try {
       const res = await fetch('/api/users/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
+          name: user.name,
           bio: trainerBio,
           specialties: trainerSpecialties.split(',').map(s => s.trim()),
           certifications: trainerCerts.split(',').map(s => s.trim())
@@ -144,6 +150,8 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
     } catch (err) {
       console.error('Error updating profile:', err);
       alert('Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -312,6 +320,15 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
               </h2>
               <div className="space-y-6">
                 <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">{t.auth.fullName}</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-black border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-cyan"
+                    value={user.name}
+                    onChange={e => setUser({...user, name: e.target.value})}
+                  />
+                </div>
+                <div>
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">{t.dashboard.bio}</label>
                   <textarea 
                     className="w-full bg-black border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neon-cyan min-h-[120px]"
@@ -341,7 +358,13 @@ const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user: initialUser }
                   />
                 </div>
                 <div className="flex gap-4 pt-4">
-                  <button onClick={handleUpdateProfile} className="bg-neon-cyan text-black font-black px-8 py-3 rounded-xl uppercase tracking-widest text-xs shadow-neon-cyan">{t.dashboard.saveProfile}</button>
+                  <button 
+                    onClick={handleUpdateProfile} 
+                    disabled={isSaving}
+                    className="bg-neon-cyan text-black font-black px-8 py-3 rounded-xl uppercase tracking-widest text-xs shadow-neon-cyan disabled:opacity-50"
+                  >
+                    {isSaving ? 'Salvando...' : t.dashboard.saveProfile}
+                  </button>
                   <button onClick={() => setShowPlanForm(null)} className="text-slate-600 font-black px-8 py-3 uppercase tracking-widest text-xs">{t.dashboard.cancel}</button>
                 </div>
               </div>

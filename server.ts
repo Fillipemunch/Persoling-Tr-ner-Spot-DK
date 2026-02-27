@@ -308,34 +308,111 @@ app.post("/api/auth/login", (req, res) => {
 });
 
 // Profile Routes
-app.post("/api/users/profile", (req, res) => {
+app.post("/api/users/profile", async (req, res) => {
   const { userId, ...updates } = req.body;
-  const index = users.findIndex(u => u.id === userId);
-  if (index !== -1) {
-    users[index] = { ...users[index], ...updates };
-    saveDB();
-    res.json(users[index]);
-  } else {
-    res.status(404).json({ message: "User not found" });
+  
+  // Map frontend field names to database column names
+  const dbUpdates: any = {};
+  if (updates.name) dbUpdates.name = updates.name;
+  if (updates.role) dbUpdates.role = updates.role;
+  if (updates.imageUrl) dbUpdates.image_url = updates.imageUrl;
+  if (updates.bio) dbUpdates.bio = updates.bio;
+  if (updates.specialties) dbUpdates.specialties = updates.specialties;
+  if (updates.certifications) dbUpdates.certifications = updates.certifications;
+  if (updates.trainerId) dbUpdates.trainer_id = updates.trainerId;
+  if (updates.trainerStatus) dbUpdates.trainer_status = updates.trainerStatus;
+  
+  dbUpdates.updated_at = new Date().toISOString();
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(dbUpdates)
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    const mappedUser = {
+      id: data.id,
+      email: data.email,
+      name: data.name,
+      role: data.role,
+      imageUrl: data.image_url,
+      trainerStatus: data.trainer_status,
+      trainerId: data.trainer_id,
+      bio: data.bio,
+      specialties: data.specialties,
+      certifications: data.certifications
+    };
+
+    res.json(mappedUser);
+  } catch (err: any) {
+    console.error("Error updating profile:", err);
+    res.status(500).json({ message: err.message });
   }
 });
 
 // Client Routes
-app.post("/api/clients/profile", (req, res) => {
-  const profile: ClientProfile = req.body;
-  const index = clientProfiles.findIndex(p => p.userId === profile.userId);
-  if (index !== -1) {
-    clientProfiles[index] = profile;
-  } else {
-    clientProfiles.push(profile);
+app.post("/api/clients/profile", async (req, res) => {
+  const profile = req.body;
+  
+  try {
+    const { data, error } = await supabase
+      .from('client_profiles')
+      .upsert({
+        user_id: profile.userId,
+        weight: profile.weight,
+        height: profile.height,
+        goal: profile.goal,
+        activity_level: profile.activityLevel,
+        medical_conditions: profile.medicalConditions,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      userId: data.user_id,
+      weight: data.weight,
+      height: data.height,
+      goal: data.goal,
+      activityLevel: data.activity_level,
+      medicalConditions: data.medical_conditions
+    });
+  } catch (err: any) {
+    console.error("Error updating client profile:", err);
+    res.status(500).json({ message: err.message });
   }
-  saveDB();
-  res.json(profile);
 });
 
-app.get("/api/clients/profile/:userId", (req, res) => {
-  const profile = clientProfiles.find(p => p.userId === req.params.userId);
-  res.json(profile || null);
+app.get("/api/clients/profile/:userId", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('client_profiles')
+      .select('*')
+      .eq('user_id', req.params.userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+
+    if (!data) return res.json(null);
+
+    res.json({
+      userId: data.user_id,
+      weight: data.weight,
+      height: data.height,
+      goal: data.goal,
+      activityLevel: data.activity_level,
+      medicalConditions: data.medical_conditions
+    });
+  } catch (err: any) {
+    console.error("Error fetching client profile:", err);
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // Trainer Routes
@@ -582,14 +659,55 @@ app.get("/api/admin/users", async (req, res) => {
   }
 });
 
-app.delete("/api/admin/users/:userId", (req, res) => {
-  const index = users.findIndex(u => u.id === req.params.userId);
-  if (index !== -1) {
-    users.splice(index, 1);
-    saveDB();
+app.patch("/api/admin/users/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role, trainerStatus } = req.body;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ 
+        role, 
+        trainer_status: trainerStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    logActivity('USER_UPDATE', `Admin updated user ${data.name} (${data.role})`);
+    res.json(data);
+  } catch (err: any) {
+    console.error("Error updating user:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete("/api/admin/users/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Delete from profiles table
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (profileError) throw profileError;
+
+    // If we have service role, we should also delete from Auth
+    if (isServiceRole) {
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      if (authError) console.error("Error deleting user from Auth:", authError.message);
+    }
+
+    logActivity('USER_DELETE', `Admin deleted user ${userId}`);
     res.json({ success: true });
-  } else {
-    res.status(404).json({ message: "User not found" });
+  } catch (err: any) {
+    console.error("Error deleting user:", err);
+    res.status(500).json({ message: err.message });
   }
 });
 

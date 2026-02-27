@@ -239,10 +239,14 @@ const AppContent: React.FC = () => {
                 {user && user?.email ? (
                   <>
                     <Link 
-                      to={user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? "/admin" : "/dashboard"} 
+                      to={
+                        (user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' || user?.role === 'admin') 
+                          ? "/admin" 
+                          : (user?.role === 'trainer' ? "/trainer" : "/dashboard")
+                      } 
                       className="hover:text-neon-cyan transition-colors"
                     >
-                      {user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
+                      {(user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' || user?.role === 'admin') 
                         ? t.nav.admin 
                         : (user?.role === 'trainer' ? t.dashboard.trainerDashboard : t.nav.dashboard)}
                     </Link>
@@ -338,13 +342,17 @@ const AppContent: React.FC = () => {
                       {user && user?.email ? (
                         <>
                           <Link 
-                            to={user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? "/admin" : "/dashboard"} 
+                            to={
+                              (user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' || user?.role === 'admin') 
+                                ? "/admin" 
+                                : (user?.role === 'trainer' ? "/trainer" : "/dashboard")
+                            } 
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="flex items-center gap-3 p-4 bg-black rounded-2xl border border-white/5 text-slate-300 hover:text-neon-cyan transition-all"
                           >
-                            {user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? <Shield size={18} /> : <LayoutDashboard size={18} />}
+                            {(user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' || user?.role === 'admin') ? <Shield size={18} /> : <LayoutDashboard size={18} />}
                             <span className="font-black uppercase tracking-widest text-xs">
-                              {user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
+                              {(user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' || user?.role === 'admin') 
                                 ? t.nav.admin 
                                 : (user?.role === 'trainer' ? t.dashboard.trainerDashboard : t.nav.dashboard)}
                             </span>
@@ -386,18 +394,23 @@ const AppContent: React.FC = () => {
           <Route path="/" element={<Marketplace filters={filters} setFilters={setFilters} />} />
           <Route path="/login" element={
             user && user?.email ? (
-              user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' 
+              (user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' || user?.role === 'admin')
                 ? <Navigate to="/admin" /> 
-                : <Navigate to="/dashboard" />
+                : (user?.role === 'trainer' ? <Navigate to="/trainer" /> : <Navigate to="/dashboard" />)
             ) : <Login onLogin={setUser} />
           } />
           <Route path="/dashboard" element={
             user ? (
-              user.role === 'client' ? <ClientDashboard user={user} /> : <TrainerDashboard user={user} />
+              user.role === 'client' ? <ClientDashboard user={user} /> : <Navigate to="/trainer" />
+            ) : <Navigate to="/login" />
+          } />
+          <Route path="/trainer" element={
+            user ? (
+              user.role === 'trainer' ? <TrainerDashboard user={user} /> : <Navigate to="/dashboard" />
             ) : <Navigate to="/login" />
           } />
           <Route path="/admin" element={
-            user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' ? <AdminDashboard /> : <Navigate to="/" />
+            (user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' || user?.role === 'admin') ? <AdminDashboard /> : <Navigate to="/" />
           } />
         </Routes>
 

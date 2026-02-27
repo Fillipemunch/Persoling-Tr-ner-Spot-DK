@@ -16,6 +16,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [trainer, setTrainer] = useState<User | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<ClientProfile>({
     userId: user.id,
     weight: 0,
@@ -78,21 +79,40 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
+      // Update Client Profile (weight, height, goal)
       const res = await fetch('/api/clients/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      if (res.ok) {
+
+      // Update User Profile (name)
+      const userRes = await fetch('/api/users/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, name: user.name }),
+      });
+
+      if (res.ok && userRes.ok) {
+        const updatedUser = await userRes.json();
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
         setProfile(formData);
         setIsEditingProfile(false);
+        
+        // Refresh data
+        await fetchProfile();
       } else {
         throw new Error('Failed to update profile');
       }
     } catch (err) {
       console.error('Error updating profile:', err);
       alert('Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -100,6 +120,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setIsSaving(true);
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result as string;
@@ -119,6 +140,8 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
       } catch (err) {
         console.error('Error uploading image:', err);
         alert('Failed to upload image. Please try again.');
+      } finally {
+        setIsSaving(false);
       }
     };
     reader.readAsDataURL(file);
@@ -189,6 +212,15 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
 
             {isEditingProfile ? (
               <form onSubmit={handleProfileSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t.auth.fullName}</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-black border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-neon-cyan"
+                    value={user.name}
+                    onChange={e => setUser({...user, name: e.target.value})}
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{t.dashboard.weight} (kg)</label>
@@ -219,7 +251,13 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ user: initialUser }) 
                     placeholder={t.dashboard.goalPlaceholder}
                   />
                 </div>
-                <button type="submit" className="w-full bg-neon-cyan text-black font-black py-3 rounded-lg mt-4 uppercase tracking-widest text-xs shadow-neon-cyan">{t.dashboard.saveProfile}</button>
+                <button 
+                  type="submit" 
+                  disabled={isSaving}
+                  className="w-full bg-neon-cyan text-black font-black py-3 rounded-lg mt-4 uppercase tracking-widest text-xs shadow-neon-cyan disabled:opacity-50"
+                >
+                  {isSaving ? 'Salvando...' : t.dashboard.saveProfile}
+                </button>
               </form>
             ) : (
               <div className="space-y-6">

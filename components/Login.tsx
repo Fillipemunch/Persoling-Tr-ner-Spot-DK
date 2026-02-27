@@ -38,8 +38,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         localStorage.setItem('user', JSON.stringify(user));
         onLogin(user);
         
-        if (user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com') {
+        if (user?.email?.toLowerCase() === 'fillipeferreiramunch@gmail.com' || user?.role === 'admin') {
           navigate('/admin');
+        } else if (user?.role === 'trainer') {
+          navigate('/trainer');
         } else {
           navigate('/dashboard');
         }

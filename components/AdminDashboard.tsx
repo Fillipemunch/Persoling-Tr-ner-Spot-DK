@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { User } from '../types';
-import { Users, Shield, Trash2, CheckCircle, XCircle, Activity, BarChart3, MessageSquare, Briefcase, Utensils, Dumbbell, Cpu, HardDrive, Clock } from 'lucide-react';
+import { User, UserRole, TrainerStatus } from '../types';
+import { Users, Shield, Trash2, CheckCircle, XCircle, Activity, BarChart3, MessageSquare, Briefcase, Utensils, Dumbbell, Cpu, HardDrive, Clock, Edit2, Save, RotateCcw } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 interface AdminStats {
@@ -28,6 +28,11 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ role: UserRole; trainerStatus: TrainerStatus }>({
+    role: 'client',
+    trainerStatus: 'none'
+  });
 
   useEffect(() => {
     fetchData();
@@ -61,6 +66,36 @@ const AdminDashboard: React.FC = () => {
       if (res.ok) {
         setUsers(users.filter(u => u.id !== userId));
         // Refresh stats after deletion
+        const statsRes = await fetch('/api/admin/stats');
+        const statsData = await statsRes.json();
+        setStats(statsData);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const startEditing = (user: User) => {
+    setEditingUser(user.id);
+    setEditForm({
+      role: user.role,
+      trainerStatus: user.trainerStatus || 'none'
+    });
+  };
+
+  const handleUpdateUser = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      });
+
+      if (res.ok) {
+        const updatedUser = await res.json();
+        setUsers(users.map(u => u.id === userId ? { ...u, ...updatedUser } : u));
+        setEditingUser(null);
+        // Refresh stats
         const statsRes = await fetch('/api/admin/stats');
         const statsData = await statsRes.json();
         setStats(statsData);
@@ -224,40 +259,94 @@ const AdminDashboard: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-8 py-4">
-                      <span className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border ${
-                        user.role === 'trainer' ? 'border-neon-cyan text-neon-cyan bg-neon-cyan/10' : 
-                        user.role === 'admin' ? 'border-neon-purple text-neon-purple bg-neon-purple/10' :
-                        'border-neon-pink text-neon-pink bg-neon-pink/10'
-                      }`}>
-                        {user.role}
-                      </span>
+                      {editingUser === user.id ? (
+                        <select 
+                          className="bg-black border border-white/10 text-[8px] font-black uppercase tracking-widest text-white rounded px-2 py-1 focus:outline-none focus:border-neon-cyan"
+                          value={editForm.role}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value as UserRole }))}
+                        >
+                          <option value="client">Client</option>
+                          <option value="trainer">Trainer</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      ) : (
+                        <span className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest border ${
+                          user.role === 'trainer' ? 'border-neon-cyan text-neon-cyan bg-neon-cyan/10' : 
+                          user.role === 'admin' ? 'border-neon-purple text-neon-purple bg-neon-purple/10' :
+                          'border-neon-pink text-neon-pink bg-neon-pink/10'
+                        }`}>
+                          {user.role}
+                        </span>
+                      )}
                     </td>
                     <td className="px-8 py-4">
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const lastSeen = user.lastSeen ? new Date(user.lastSeen).getTime() : 0;
-                          const isOnline = Date.now() - lastSeen < 300000; // Online if active in last 5 mins
-                          return (
-                            <>
-                              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-neon-green shadow-neon-green' : 'bg-slate-600'}`}></div>
-                              <span className={`text-[8px] font-black uppercase tracking-widest ${isOnline ? 'text-neon-green' : 'text-slate-500'}`}>
-                                {isOnline ? 'Online' : 'Offline'}
-                              </span>
-                            </>
-                          );
-                        })()}
-                      </div>
+                      {editingUser === user.id ? (
+                        <select 
+                          className="bg-black border border-white/10 text-[8px] font-black uppercase tracking-widest text-white rounded px-2 py-1 focus:outline-none focus:border-neon-cyan"
+                          value={editForm.trainerStatus}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, trainerStatus: e.target.value as TrainerStatus }))}
+                        >
+                          <option value="none">None</option>
+                          <option value="pending">Pending</option>
+                          <option value="accepted">Accepted</option>
+                        </select>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const lastSeen = user.lastSeen ? new Date(user.lastSeen).getTime() : 0;
+                            const isOnline = Date.now() - lastSeen < 300000; // Online if active in last 5 mins
+                            return (
+                              <>
+                                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-neon-green shadow-neon-green' : 'bg-slate-600'}`}></div>
+                                <span className={`text-[8px] font-black uppercase tracking-widest ${isOnline ? 'text-neon-green' : 'text-slate-500'}`}>
+                                  {isOnline ? 'Online' : 'Offline'}
+                                </span>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </td>
                     <td className="px-8 py-4 text-right">
-                      {user.role !== 'admin' && (
-                        <button 
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="p-2 text-slate-600 hover:text-neon-pink transition-colors"
-                          title="Delete User"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {editingUser === user.id ? (
+                          <>
+                            <button 
+                              onClick={() => handleUpdateUser(user.id)}
+                              className="p-2 text-neon-green hover:scale-110 transition-transform"
+                              title="Save Changes"
+                            >
+                              <Save size={16} />
+                            </button>
+                            <button 
+                              onClick={() => setEditingUser(null)}
+                              className="p-2 text-slate-500 hover:scale-110 transition-transform"
+                              title="Cancel"
+                            >
+                              <RotateCcw size={16} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button 
+                              onClick={() => startEditing(user)}
+                              className="p-2 text-slate-600 hover:text-neon-cyan transition-colors"
+                              title="Edit User"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            {user.role !== 'admin' && (
+                              <button 
+                                onClick={() => handleDeleteUser(user.id)}
+                                className="p-2 text-slate-600 hover:text-neon-pink transition-colors"
+                                title="Delete User"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
